@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="margin_20">5dp</dimen>
+    <dimen name="margin_30">5dp</dimen>
+    <dimen name="margin_img_h">85dp</dimen>
+    <dimen name="margin_img_w">150dp</dimen>
+
+    <dimen name="tv_tag">35sp</dimen>
+    <dimen name="margin_10">10dp</dimen>
+    <dimen name="margin_h_50">50dp</dimen>
+    <dimen name="img_noti_w">36dp</dimen>
+    <dimen name="img_noti_h">25dp</dimen>
+    <dimen name="lin_bottom">80dp</dimen>
+    <dimen name="img_h">550dp</dimen>
+    <dimen name="text_21">21sp</dimen>
+    <dimen name="text_42">42sp</dimen>
+    <!--1484-->
+    <dimen name="img_w">1484dp</dimen>
+</resources>

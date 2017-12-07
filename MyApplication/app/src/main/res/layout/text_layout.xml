@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:id="@+id/linearLayout"
+    android:layout_height="wrap_content"
+    >
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:orientation="vertical"
+            android:layout_height="match_parent">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/tv_title"
+            android:text="十多年发你哦ID分泌萨芬"
+            android:layout_gravity="center"
+            android:textSize="20sp"
+            android:textColor="#000"
+           />
+
+        <ImageView
+            android:id="@+id/imagview"
+            android:src="@mipmap/zh10"
+            android:layout_width="match_parent"
+            android:scaleType="centerCrop"
+            android:layout_gravity="center_horizontal"
+            android:adjustViewBounds="true"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+             />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/tv_content"
+            android:textSize="25sp"
+            android:text="@string/tv_cone"
+            android:layout_marginTop="10dp"
+            android:textColor="#000"
+            />
+        </LinearLayout>
+</FrameLayout>

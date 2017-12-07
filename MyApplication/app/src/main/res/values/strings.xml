@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">My Application</string>
+    <string name="tv_cone">addViewInQueue()方法中先将添加的View加到滚动部分mainLayout中，再计算添加View的总宽度，便于下面计算滚动起点。
+
+startScroll()方法中，如果方向是从左向右，那就将滚动起点设为(viewWidth, 0)，如果是从右向左，那就将滚动起点设为(-screenWidth, 0)。这里要注意的是scrollTo方法参数为正时在坐标系中是负向（向左）的，参数为负时在坐标系中是正向（向右）的。
+
+mainLayout就是滚动部分了。当mainLayout整体全部滚动出屏幕，即滚动距离=screenWidth+viewWidth时重置起点，实现循环跑马灯的效果。
+
+mainLayout的布局很简单，就是一个横向的LinearLayout。
+
+作者：愚蠢的高小星
+链接：http://www.jianshu.com/p/f36f68c3de46
+來源：简书
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。</string>
+</resources>

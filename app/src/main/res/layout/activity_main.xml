@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main_rl"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@mipmap/background"
+    android:orientation="vertical"
+    tools:context="com.app.tvproject.mvp.presenter.activity.MainActivity">
+    <!--logo栏-->
+    <RelativeLayout
+        android:id="@+id/top_rl"
+        android:layout_toLeftOf="@+id/right_rl"
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true">
+
+        <ImageView
+            android:id="@+id/img_logo"
+            android:layout_marginLeft="3dp"
+            android:layout_width="@dimen/margin_img_w"
+            android:layout_height="@dimen/margin_img_h"
+            android:src="@mipmap/logo_icon"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentLeft="true"
+           />
+
+        <TextView
+            android:visibility="gone"
+            android:id="@+id/tv_logo_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/img_logo"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="20dp"
+            android:text="政好平台."
+            android:textColor="@color/color_black"
+            android:textSize="23sp" />
+
+        <TextView
+            android:layout_marginLeft="22dp"
+            android:layout_alignLeft="@+id/img_logo"
+            android:layout_below="@+id/img_logo"
+            android:id="@+id/tv_tag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@+id/tv_logo_title"
+            android:textColor="@color/color_background"
+            android:textSize="25sp" />
+        <Button
+            android:id="@+id/clear"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:text="清空"/>
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:textColor="@color/color_black"
+            android:textSize="45sp" />
+    </RelativeLayout>
+    <!-- 图片类的frameLayout-->
+    <FrameLayout
+        android:layout_marginBottom="3dp"
+        android:visibility="gone"
+        android:id="@+id/img_frameLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/bottom_rl"
+        android:layout_below="@+id/top_rl"
+        android:layout_toLeftOf="@+id/right_rl"
+        android:gravity="center"
+        android:orientation="vertical" />
+
+    <!-- 图片类的frameLayout,插播用-->
+    <FrameLayout
+        android:layout_marginBottom="3dp"
+        android:visibility="gone"
+        android:id="@+id/img_interCut_frameLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/bottom_rl"
+        android:layout_below="@+id/top_rl"
+        android:layout_toLeftOf="@+id/right_rl"
+        android:gravity="center"
+        android:orientation="vertical" />
+
+    <!-- 视频类的frameLayout，插播用,全屏-->
+    <!--<FrameLayout-->
+        <!--android:visibility="gone"-->
+        <!--android:layout_marginBottom="3dp"-->
+        <!--android:layout_marginRight="1dp"-->
+        <!--android:layout_alignParentLeft="true"-->
+        <!--android:id="@+id/video_interCut_FrameLayout"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--android:layout_above="@+id/bottom_rl"-->
+        <!--android:layout_toLeftOf="@+id/right_rl"-->
+        <!--/>-->
+
+    <!-- 视频类的frameLayout，全屏-->
+    <FrameLayout
+        android:visibility="gone"
+        android:layout_centerInParent="true"
+        android:layout_marginBottom="3dp"
+        android:layout_marginRight="1dp"
+        android:layout_alignParentLeft="true"
+        android:id="@+id/videoFrameLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/bottom_rl"
+        android:layout_toLeftOf="@+id/right_rl"
+     />
+
+
+    <!--底部布局-->
+    <RelativeLayout
+        android:id="@+id/bottom_rl"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_toLeftOf="@+id/right_rl"
+        android:background="@color/color_background"
+        android:gravity="bottom">
+
+        <ImageView
+            android:id="@+id/img_icon_notice"
+            android:layout_width="@dimen/img_noti_w"
+            android:layout_height="@dimen/img_noti_h"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="@dimen/margin_10"
+            android:src="@mipmap/notice_icon" />
+
+        <TextView
+            android:id="@+id/tv_notice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="@dimen/margin_10"
+            android:layout_marginRight="@dimen/margin_10"
+            android:layout_toRightOf="@+id/img_icon_notice"
+            android:text="@string/tv_notice_title"
+            android:textColor="@color/color_white"
+            android:textSize="@dimen/tv_tag" />
+9
+        <HorizontalScrollView
+            android:layout_toRightOf="@+id/tv_notice"
+            android:id="@+id/marquee_tv"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/lin_bottom"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:background="@color/color_black_gray"
+            android:scrollbars="none">
+
+            <TextView
+                android:id="@+id/tv_no_content"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:maxLines="1"
+                android:textColor="@color/color_white"
+                android:textSize="40sp" />
+
+        </HorizontalScrollView>
+
+
+    </RelativeLayout>
+    <!--   android:singleLine="true" android:ellipsize="marquee"  android:marqueeRepeatLimit="marquee_forever"-->
+    <RelativeLayout
+        android:id="@+id/right_rl"
+        android:layout_width="190dp"
+        android:layout_height="match_parent"
+        android:background="@color/color_background"
+        android:gravity="center_horizontal"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true">
+
+        <TextView
+            android:layout_marginTop="15dp"
+            android:textSize="@dimen/text_42"
+            android:layout_centerHorizontal="true"
+            android:id="@+id/right_time_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/color_white" />
+        <!--<ImageView-->
+        <!--android:id="@+id/ima_logo"-->
+        <!--android:layout_width="200dp"-->
+        <!--android:layout_marginTop="10dp"-->
+        <!--android:layout_centerHorizontal="true"-->
+        <!--android:layout_height="120dp"-->
+        <!--android:src="@mipmap/logo_white" />-->
+
+        <TextView
+            android:id="@+id/right_main_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ems="1"
+            android:layout_marginBottom="10dp"
+            android:lineSpacingExtra="5dp"
+            android:paddingLeft="8dp"
+            android:text="@string/tv_right_content"
+            android:textColor="@color/color_white"
+            android:textSize="65sp"
+            android:textStyle="bold"
+            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="true" />
+
+        <RelativeLayout
+            android:layout_below="@+id/right_main_tv"
+            android:id="@+id/right_bottom_rl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true">
+
+            <TextView
+                android:textSize="@dimen/text_21"
+                android:id="@+id/right_data_tv"
+                android:layout_above="@+id/right_calendar_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:gravity="center_horizontal"
+                android:layout_marginBottom="5dp"
+                android:textColor="@color/color_white" />
+            <TextView
+                android:textSize="@dimen/text_21"
+                android:layout_above="@+id/right_air_tv"
+                android:id="@+id/right_calendar_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:gravity="center_horizontal"
+                android:layout_marginBottom="5dp"
+                android:textColor="@color/color_white" />
+            <TextView
+                android:textSize="@dimen/text_21"
+                android:id="@+id/right_air_tv"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingBottom="15dp"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:gravity="center_horizontal"
+                android:textColor="@color/color_white" />
+        </RelativeLayout>
+    </RelativeLayout>
+</RelativeLayout>
