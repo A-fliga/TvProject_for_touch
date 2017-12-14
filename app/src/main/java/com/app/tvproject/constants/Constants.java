@@ -1,5 +1,9 @@
 package com.app.tvproject.constants;
 
+import android.os.Environment;
+
+import java.io.File;
+
 /**
  * Created by www on 2017/11/13.
  * 常量类
@@ -10,8 +14,6 @@ public final class Constants {
     //极光别名，不可修改
     public static final String JPUSH_NAME = "touchid";
 
-    //
-    public static final int SEQUENCE = 1;
     public static final String TV_PROJECT_SHARED_NAME = "TV_PROJECT";
     public static final String CONTENT_TYPE = "application/json;charset=UTF-8";
 
@@ -50,6 +52,7 @@ public final class Constants {
 
     public static int time = 0;
 
+    public static final String DOWNLOAD_DIR = Environment.getExternalStorageDirectory().toString() +
+            File.separator + "TvProject" + File.separator;
 
-    public static final String NET_CHANGE = "NET_CHANGE";
 }

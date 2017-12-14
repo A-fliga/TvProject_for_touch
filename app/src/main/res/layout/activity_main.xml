@@ -52,6 +52,7 @@
             android:textColor="@color/color_background"
             android:textSize="25sp" />
         <Button
+            android:visibility="gone"
             android:id="@+id/clear"
             android:layout_width="50dp"
             android:layout_height="50dp"

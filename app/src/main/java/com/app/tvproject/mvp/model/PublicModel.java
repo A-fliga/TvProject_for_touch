@@ -5,6 +5,7 @@ import com.app.tvproject.mvp.model.data.BaseEntity;
 import com.app.tvproject.mvp.model.data.ChooseSettingsBean;
 import com.app.tvproject.mvp.model.data.ContentBean;
 import com.app.tvproject.mvp.model.data.PublishListBean;
+import com.app.tvproject.mvp.model.data.UpdateBean;
 import com.app.tvproject.mvp.model.data.UpdateUseEqBean;
 import com.app.tvproject.mvp.model.data.WeatherBean;
 import com.app.tvproject.utils.NetUtil;
@@ -93,5 +94,9 @@ public class PublicModel implements IModel {
      */
     public synchronized void dowLoadFile(Subscriber<ResponseBody> subscriber, String url) {
         HttpClient.getInstance().dowLoadFile(subscriber, url);
+    }
+
+    public void getUpdateInfo(Subscriber<BaseEntity<UpdateBean>> subscriber){
+        HttpClient.getInstance().getUpdateInfo(subscriber);
     }
 }

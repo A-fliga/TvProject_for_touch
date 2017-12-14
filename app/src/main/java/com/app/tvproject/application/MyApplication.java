@@ -14,20 +14,20 @@ import cn.jpush.android.api.JPushInterface;
 
 public class MyApplication extends Application {
     private static Context context;
+    private static MyApplication application;
     @Override
     public void onCreate() {
         super.onCreate();
         context = getApplicationContext();
-
+        application = this;
         //初始化数据库
-        new DaoUtil(this);
-//        Fresco.initialize(this);
+        DaoUtil.initDao(this);
         //极光推送
-        JPushInterface.setDebugMode(true);
         JPushInterface.init(this);
+        JPushInterface.setDebugMode(true);
 
         //静默推送
-        JPushInterface.setSilenceTime(this, 0, 0, 23, 59);
+//        JPushInterface.setSilenceTime(this, 0, 0, 23, 59);
 
     }
 
@@ -35,10 +35,13 @@ public class MyApplication extends Application {
         return context;
     }
 
+    public static MyApplication getAppContext(){
+        return application;
+    }
     /**
      * 设置极光的别名或标签
      */
-    public static void setAlisa(String alias) {
+    public void setAlisa(String alias) {
         if(alias != null){
             JPushInterface.setAlias(getContext(), 1001, alias);
             SharedPreferencesUtil.saveJpushAlias(alias);

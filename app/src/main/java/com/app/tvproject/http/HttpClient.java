@@ -6,6 +6,7 @@ import com.app.tvproject.mvp.model.data.BaseEntity;
 import com.app.tvproject.mvp.model.data.ChooseSettingsBean;
 import com.app.tvproject.mvp.model.data.ContentBean;
 import com.app.tvproject.mvp.model.data.PublishListBean;
+import com.app.tvproject.mvp.model.data.UpdateBean;
 import com.app.tvproject.mvp.model.data.UpdateUseEqBean;
 import com.app.tvproject.mvp.model.data.WeatherBean;
 import com.google.gson.Gson;
@@ -195,6 +196,14 @@ public final class HttpClient {
      */
     public void dowLoadFile(Subscriber<ResponseBody> subscriber,String url){
         Observable observable = mApi.dowLoadFile(url);
+        toSubscribe(observable,subscriber);
+    }
+
+    /**
+     * 更新APP
+     */
+    public void getUpdateInfo(Subscriber<BaseEntity<UpdateBean>> subscriber){
+        Observable observable = mApi.getUpdateInfo();
         toSubscribe(observable,subscriber);
     }
 }

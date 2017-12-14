@@ -12,6 +12,7 @@ import java.util.List;
 
 public class ImgWithTextDelegate extends ViewDelegate {
     private ConvenientBanner convenientBanner;
+
     @Override
     public void onDestroy() {
     }
@@ -27,7 +28,9 @@ public class ImgWithTextDelegate extends ViewDelegate {
         convenientBanner = get(R.id.img_banner);
     }
 
-    public void showImgBanner(List<String> imgUrl){
+    public void showImgBanner(List<String> imgUrl) {
+        convenientBanner.setScrollDuration(5000);
+        convenientBanner.getViewPager().setCanScroll(false);
         if (imgUrl.size() == 1) {
             convenientBanner.setCanLoop(false);
         }
@@ -35,7 +38,7 @@ public class ImgWithTextDelegate extends ViewDelegate {
             convenientBanner.setCanLoop(true);
             convenientBanner.setManualPageable(true);
         }
-        convenientBanner.setPages(InfoBannerAdapter::new,imgUrl);
-        convenientBanner.startTurning(5000);
+        convenientBanner.setPages(InfoBannerAdapter::new, imgUrl);
+        convenientBanner.startTurning(8000);
     }
 }

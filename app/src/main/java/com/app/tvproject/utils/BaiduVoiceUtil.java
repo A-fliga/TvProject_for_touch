@@ -1,8 +1,8 @@
 package com.app.tvproject.utils;
 
 import android.media.AudioManager;
-import android.os.Environment;
 
+import com.app.tvproject.constants.Constants;
 import com.baidu.tts.client.SpeechError;
 import com.baidu.tts.client.SpeechSynthesizer;
 import com.baidu.tts.client.SpeechSynthesizerListener;
@@ -40,8 +40,7 @@ public class BaiduVoiceUtil {
 
     public static void initialEnv() {
         if (mSampleDirPath == null) {
-            String sdcardPath = Environment.getExternalStorageDirectory().toString();
-            mSampleDirPath = sdcardPath + File.separator + SAMPLE_DIR_NAME;
+            mSampleDirPath = Constants.DOWNLOAD_DIR + SAMPLE_DIR_NAME;
         }
         File file = new File(mSampleDirPath);
         if (!file.exists()) {
@@ -100,7 +99,7 @@ public class BaiduVoiceUtil {
         // 检查2个离线资源是否可读
         isSuccess = checkOfflineResources();
         if (isSuccess) {
-            LogUtil.w( "离线资源存在并且可读");
+            LogUtil.w("离线资源存在并且可读");
         }
         SpeechSynthesizerListener listener = new SpeechSynthesizerListener() {
             @Override

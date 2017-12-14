@@ -4,6 +4,7 @@ import com.app.tvproject.mvp.model.data.BaseEntity;
 import com.app.tvproject.mvp.model.data.ChooseSettingsBean;
 import com.app.tvproject.mvp.model.data.ContentBean;
 import com.app.tvproject.mvp.model.data.PublishListBean;
+import com.app.tvproject.mvp.model.data.UpdateBean;
 import com.app.tvproject.mvp.model.data.UpdateUseEqBean;
 import com.app.tvproject.mvp.model.data.WeatherBean;
 
@@ -79,4 +80,10 @@ public interface Api {
      */
     @POST("getWeather")
     Observable<WeatherBean> getWeather();
+
+    /**
+     * 更新app
+     */
+    @GET("getTouchUpdate")
+    Observable<BaseEntity<UpdateBean>> getUpdateInfo();
 }

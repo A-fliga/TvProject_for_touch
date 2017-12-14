@@ -47,17 +47,12 @@ public class ToastUtil {
      * @param msg
      */
     public static void l(@NonNull final String msg) {
-        AppUtil.getHandler().post(new Runnable() {
-            @Override
-            public void run() {
-                if (toast == null) {
-                    toast = Toast.makeText(ContextUtil.getContext(), msg, Toast.LENGTH_LONG);
-                } else {
-                    toast.setText(msg);
-                }
-                toast.show();
-            }
-        });
+        if (toast == null) {
+            toast = Toast.makeText(ContextUtil.getContext(), msg, Toast.LENGTH_LONG);
+        } else {
+            toast.setText(msg);
+        }
+        toast.show();
     }
 
     /**
@@ -66,16 +61,11 @@ public class ToastUtil {
      * @param res
      */
     public static void l(@StringRes final int res) {
-        AppUtil.getHandler().post(new Runnable() {
-            @Override
-            public void run() {
-                if (toast == null) {
-                    toast = Toast.makeText(ContextUtil.getContext(), res, Toast.LENGTH_LONG);
-                } else {
-                    toast.setText(res);
-                }
-                toast.show();
-            }
-        });
+        if (toast == null) {
+            toast = Toast.makeText(ContextUtil.getContext(), res, Toast.LENGTH_LONG);
+        } else {
+            toast.setText(res);
+        }
+        toast.show();
     }
 }

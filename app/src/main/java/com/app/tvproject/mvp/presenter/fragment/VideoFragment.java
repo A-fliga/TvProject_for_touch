@@ -35,13 +35,9 @@ public class VideoFragment extends FragmentPresenter<VideoFragmentDelegate> {
 
     public CustomerVideoView getVideoView() {
         if (!isSpots) {
-            if (videoView != null)
-                LogUtil.w("idceshi", "fm里非插播的id" + videoView.toString());
             return videoView;
 
         } else {
-            if (cut_videoView != null)
-                LogUtil.w("idceshi", "fm里插播的id" + cut_videoView.toString());
             return cut_videoView;
         }
     }

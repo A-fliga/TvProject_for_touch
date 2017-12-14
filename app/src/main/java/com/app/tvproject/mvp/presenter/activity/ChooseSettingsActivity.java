@@ -85,7 +85,7 @@ public class ChooseSettingsActivity extends ActivityPresenter<ChooseSettingsActi
         long id = resultBean.id;
         String alias = Constants.JPUSH_NAME + id;
         //设置极光别名
-        MyApplication.setAlisa(alias);
+        MyApplication.getAppContext().setAlisa(alias);
         //保存设备id
         SharedPreferencesUtil.saveEqId(this, id);
         backToMain(resultBean);

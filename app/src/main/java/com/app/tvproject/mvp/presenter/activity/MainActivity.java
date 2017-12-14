@@ -1,8 +1,10 @@
 package com.app.tvproject.mvp.presenter.activity;
 
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Looper;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -19,6 +21,7 @@ import com.app.tvproject.mvp.model.data.BaseEntity;
 import com.app.tvproject.mvp.model.data.ContentBean;
 import com.app.tvproject.mvp.model.data.EventBusData;
 import com.app.tvproject.mvp.model.data.PublishListBean;
+import com.app.tvproject.mvp.model.data.UpdateBean;
 import com.app.tvproject.mvp.model.data.UpdateUseEqBean;
 import com.app.tvproject.mvp.model.data.WeatherBean;
 import com.app.tvproject.mvp.presenter.fragment.ImgWithTextFragment;
@@ -28,6 +31,7 @@ import com.app.tvproject.mvp.view.CustomerView.CustomerVideoView;
 import com.app.tvproject.mvp.view.MainActivityDelegate;
 import com.app.tvproject.myDao.DaoManager;
 import com.app.tvproject.receiver.NetBroadCastReceiver;
+import com.app.tvproject.utils.AppUtil;
 import com.app.tvproject.utils.BaiduVoiceUtil;
 import com.app.tvproject.utils.ControlVolumeUtil;
 import com.app.tvproject.utils.DialogUtil;
@@ -42,7 +46,12 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -97,6 +106,44 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         DownLoadFileManager.getInstance().stopDownLoad(false);
+//        try {
+//            Runtime.getRuntime().exec("su");
+        checkUpdate();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+    }
+
+    private void checkUpdate() {
+        if (NetUtil.isConnectNoToast()) {
+            PublicModel.getInstance().getUpdateInfo(new Subscriber<BaseEntity<UpdateBean>>() {
+                @Override
+                public void onCompleted() {
+
+                }
+
+                @Override
+                public void onError(Throwable e) {
+                    noUpdate();
+                }
+
+                @Override
+                public void onNext(BaseEntity<UpdateBean> updateBeanBaseEntity) {
+                    if (Float.parseFloat(AppUtil.getVersionName()) < Float.parseFloat(updateBeanBaseEntity.getResult().versionsnum)) {
+                        //开始下载更新并安装
+                        new Thread(() -> {
+                            Looper.prepare();
+                            startUpdate(updateBeanBaseEntity.getResult().appurl);
+                        }).start();
+                    } else {
+                        noUpdate();
+                    }
+                }
+            });
+        } else noUpdate();
+    }
+
+    private void noUpdate() {
         //首次进入页面判断是否配置了设备和推送信息
         if (noSettings()) {
             viewDelegate.hideMainRl(true);
@@ -106,6 +153,76 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             initServiceData(false);
         }
     }
+
+    private void startUpdate(String appUrl) {
+        ProgressDialog pd = DialogUtil.showProgressDialog(this);
+        runOnUiThread(pd::show);
+        if (DownLoadFileManager.getInstance().downLoadApk(pd, appUrl) && DownLoadFileManager.getInstance().getApkPath() != null) {
+            closeDialog(pd);
+            if (startInstallApk(DownLoadFileManager.getInstance().getApkPath())) {
+                //TODO 这里要加上重新启动
+                ToastUtil.s("安装成功");
+            } else {
+                noUpdate();
+            }
+        } else {
+            closeDialog(pd);
+            noUpdate();
+        }
+    }
+
+    private void closeDialog(ProgressDialog pd) {
+        runOnUiThread(() -> {
+            pd.hide();
+            pd.dismiss();
+        });
+    }
+
+    private Boolean startInstallApk(String apkPath) {
+        boolean result = false;
+        DataOutputStream dataOutputStream = null;
+        BufferedReader errorStream = null;
+        try {
+            // 申请su权限
+            Process process = Runtime.getRuntime().exec("su");
+            dataOutputStream = new DataOutputStream(process.getOutputStream());
+//            dataOutputStream.writeBytes("export LD_LIBRARY_PATH=/vendor/lib:/system/lib\n");
+            // 执行pm install命令
+            String command = "pm install -r " + apkPath + "\n";
+            dataOutputStream.write(command.getBytes(Charset.forName("utf-8")));
+            dataOutputStream.flush();
+            dataOutputStream.writeBytes("exit\n");
+            dataOutputStream.flush();
+            process.waitFor();
+            errorStream = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            String msg = "";
+            String line;
+            // 读取命令的执行结果
+            while ((line = errorStream.readLine()) != null) {
+                msg += line;
+            }
+            Log.d("TAG", "install msg is " + msg);
+            // 如果执行结果中包含Failure字样就认为是安装失败，否则就认为安装成功
+            if (!msg.contains("Failure")) {
+                result = true;
+            }
+        } catch (Exception e) {
+            Log.e("TAG", e.getMessage(), e);
+        } finally {
+            try {
+                if (dataOutputStream != null) {
+                    dataOutputStream.close();
+                }
+                if (errorStream != null) {
+                    errorStream.close();
+                }
+            } catch (IOException e) {
+                Log.e("TAG", e.getMessage(), e);
+            }
+        }
+        return result;
+    }
+
 
     private void initServiceData(Boolean deleteAll) {
         initBaiDuVoice();
@@ -143,19 +260,9 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         SharedPreferencesUtil.resetShared();
         //是否要删掉原来的全部文件
         if (deleteFile)
-            deleteFilesByDirectory(DownLoadFileManager.getInstance().getDownloadDir());
+            DownLoadFileManager.getInstance().deleteFilesByDirectory(DownLoadFileManager.getInstance().getDownloadDir());
     }
 
-
-    //全部删掉之前下载的文件
-    private static void deleteFilesByDirectory(String path) {
-        File directory = new File(path);
-        if (directory.exists() && directory.isDirectory()) {
-            for (File item : directory.listFiles()) {
-                item.delete();
-            }
-        }
-    }
 
     private void initInfo() {
         //取出本地资讯
@@ -189,7 +296,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     }
 
     //开始播放时长倒计时并循环数组
-    private void countDownNotice(long duration) {
+    private synchronized void countDownNotice(long duration) {
         noticeTask = new TimerTask() {
             @Override
             public void run() {
@@ -197,15 +304,18 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 nextNotice(false);
             }
         };
-        timer.schedule(noticeTask, duration * 1000);
+//        LogUtil.w("daojishi", "倒计时时间：" + duration);
+        if (duration >= 0)
+            timer.schedule(noticeTask, duration * 1000);
+        else timer.schedule(noticeTask, 15000);
         cutNoticeTime = System.currentTimeMillis();
-        LogUtil.w("shijian", "启动线程的时间:" + cutNoticeTime);
+//        LogUtil.w("shijian", "启动线程的时间:" + cutNoticeTime);
     }
 
     // 这里要注意正在播放的内容的下标的处理,noAddPosition：是否不加1，true为不加
-    private void nextNotice(boolean noAddPosition) {
+    private synchronized void nextNotice(boolean noAddPosition) {
         List<ContentBean> noticeList = loadAllValidNotice();
-        LogUtil.w("ceshi", "开始下一条：noticeList.size()=" + noticeList.size() + " " + noAddPosition);
+//        LogUtil.w("ceshi", "开始下一条：noticeList.size()=" + noticeList.size() + " " + noAddPosition);
         if (noticeList.size() == 0) {
             viewDelegate.setNoticeNull();
         } else {
@@ -214,13 +324,13 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                     (SharedPreferencesUtil.getNoticePosition() + 1) % noticeList.size();
             if (nextPosition == -1)
                 nextPosition = 0;
-            LogUtil.w("ceshi", "应该播的坐标：" + nextPosition);
+//            LogUtil.w("ceshi", "应该播的坐标：" + nextPosition);
             ContentBean contentBean = noticeList.get(nextPosition);
             if (contentBean != null) {
                 viewDelegate.startMarquee(contentBean);
-                LogUtil.w("ceshi", "正在播放的ID：" + contentBean.getId() + contentBean.getHeadline());
+//                LogUtil.w("ceshi", "正在播放的ID：" + contentBean.getId() + contentBean.getHeadline());
                 SharedPreferencesUtil.saveNoticeId(contentBean.getId());
-                LogUtil.w("ceshi", "开始进入倒计时");
+//                LogUtil.w("ceshi", "开始进入倒计时");
                 countDownNotice(contentBean.getDuration());
             }
             //避免当前bean为空但list还有内容的情况
@@ -360,64 +470,68 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 allList.addAll(serverList.get(i));
             }
         }
+        if (allList.size() == 0) {
+            setInfoNull(-1);
+        } else {
 
-        List<ContentBean> afterList = new ArrayList<>();
-        List<ContentBean> noticeList = new ArrayList<>();
-        for (int i = 0; i < allList.size(); i++) {
-            if (allList.get(i).getPublishTypeId() == Constants.PUBLISH_TYPE_INFORMATION)
-                afterList.add(allList.get(i));
-            if (allList.get(i).getPublishTypeId() == Constants.PUBLISH_TYPE_NOTICE) {
-                noticeList.add(allList.get(i));
+            List<ContentBean> afterList = new ArrayList<>();
+            List<ContentBean> noticeList = new ArrayList<>();
+            for (int i = 0; i < allList.size(); i++) {
+                if (allList.get(i).getPublishTypeId() == Constants.PUBLISH_TYPE_INFORMATION)
+                    afterList.add(allList.get(i));
+                if (allList.get(i).getPublishTypeId() == Constants.PUBLISH_TYPE_NOTICE) {
+                    noticeList.add(allList.get(i));
+                }
             }
-        }
 
-        List<Long> afterId = new ArrayList<>();
-        for (int i = 0; i < afterList.size(); i++) {
-            afterId.add(afterList.get(i).getId());
-        }
+            List<Long> afterId = new ArrayList<>();
+            for (int i = 0; i < afterList.size(); i++) {
+                afterId.add(afterList.get(i).getId());
+            }
 
-        //要找出相同的Id和对应下标
-        List<Long> sameId = new ArrayList<>();
-        List<Integer> sameIdIndex = new ArrayList<>();
-        for (int j = 0; j < afterId.size(); j++) {
+            //要找出相同的Id和对应下标
+            List<Long> sameId = new ArrayList<>();
+            List<Integer> sameIdIndex = new ArrayList<>();
+            for (int j = 0; j < afterId.size(); j++) {
+                for (int i = 0; i < beforeId.size(); i++) {
+                    if (Objects.equals(beforeId.get(i), afterId.get(j))) {
+                        LogUtil.w("测试刷新", "有相同的id，id值为：" + afterId.get(j) + "标题为:" + queryContentById(afterId.get(j)).getHeadline() + "在after的下标为:" + j);
+                        sameId.add(afterId.get(j));
+                        sameIdIndex.add(j);
+                    }
+                }
+            }
+
+            //有相同id的，要比较它们的sortTime，如果发现有编辑过，那就保留网址，没编辑过，替换网址成local地址
+            for (int i = 0; i < sameId.size(); i++) {
+                ContentBean beforeBean = queryContentById(sameId.get(i));
+                String[] imgUrl = beforeBean.getImageurl().replaceAll(" ", "").split(",");
+                ContentBean afterBean = afterList.get(sameIdIndex.get(i));
+                LogUtil.w("测试刷新", "相同Id它们的sort为：beforeBean：" + beforeBean.getSort() + " afterBean:" + afterBean.getSort());
+                if (beforeBean.getSort() >= afterBean.getSort()) {
+                    if (isFileAllExists(imgUrl)) {
+                        LogUtil.w("测试刷新", "更换网址为本地");
+                        afterBean.setImageurl(beforeBean.getImageurl());
+                    }
+                }
+            }
+            beforeId.removeAll(sameId);
             for (int i = 0; i < beforeId.size(); i++) {
-                if (Objects.equals(beforeId.get(i), afterId.get(j))) {
-                    LogUtil.w("测试刷新", "有相同的id，id值为：" + afterId.get(j) + "标题为:" + queryContentById(afterId.get(j)).getHeadline() + "在after的下标为:" + j);
-                    sameId.add(afterId.get(j));
-                    sameIdIndex.add(j);
-                }
+                ContentBean beforeBean = queryContentById(beforeId.get(i));
+                DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getImageurl());
             }
-        }
-
-        //有相同id的，要比较它们的sortTime，如果发现有编辑过，那就保留网址，没编辑过，替换网址成local地址
-        for (int i = 0; i < sameId.size(); i++) {
-            ContentBean beforeBean = queryContentById(sameId.get(i));
-            String[] imgUrl = beforeBean.getImageurl().replaceAll(" ", "").split(",");
-            ContentBean afterBean = afterList.get(sameIdIndex.get(i));
-            LogUtil.w("测试刷新", "相同Id它们的sort为：beforeBean：" + beforeBean.getSort() + " afterBean:" + afterBean.getSort());
-            if (beforeBean.getSort() >= afterBean.getSort()) {
-                if (isFileAllExists(imgUrl)) {
-                    LogUtil.w("测试刷新", "更换网址为本地");
-                    afterBean.setImageurl(beforeBean.getImageurl());
-                }
+            deleteDataAndShared(false);
+            insertOrReplaceList(afterList);
+            insertOrReplaceList(noticeList);
+            startDownLoad();
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
+            initInfo();
+            initNotice();
         }
-        beforeId.removeAll(sameId);
-        for (int i = 0; i < beforeId.size(); i++) {
-            ContentBean beforeBean = queryContentById(beforeId.get(i));
-            DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getImageurl());
-        }
-        deleteDataAndShared(false);
-        insertOrReplaceList(afterList);
-        insertOrReplaceList(noticeList);
-        startDownLoad();
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        initInfo();
-        initNotice();
     }
 
     //对比文件是否都存在
@@ -460,7 +574,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     }
 
 
-    //定时更新天气 3小时更新一次
+    //定时更新天气 2小时更新一次
     private void getNowWeather() {
         TimerTask task = new TimerTask() {
             @Override
@@ -474,7 +588,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
 
                         @Override
                         public void onError(Throwable e) {
-                            LogUtil.w("weather",e.toString());
+                            LogUtil.w("weather", e.toString());
                         }
 
                         @Override
@@ -504,6 +618,8 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
      */
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEventMessageThread(EventBusData eventBusData) {
+//        ToastUtil.l("收到消息了,收到消息了,收到消息了,收到消息了,收到消息了" +
+//                "收到消息了,收到消息了,收到消息了");
         String action = eventBusData.getAction();
         long contentId = eventBusData.getContent_id();
         switch (action) {
@@ -596,12 +712,17 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             transaction.replace(R.id.img_frameLayout, nullInfoFragment).commit();
         if (isImg == Constants.IS_MOVIE)
             transaction.replace(R.id.videoFrameLayout, nullInfoFragment).commit();
+        if (isImg == -1) {
+            viewDelegate.setImgFrameVisibility(false);
+            viewDelegate.setVideoFrameVisibility(false);
+        }
         viewDelegate.setTitle("");
         viewDelegate.setTagContent("");
+        stopVoiceAndVideo();
     }
 
     private void stopNotice(long contentId) {
-        LogUtil.w("ceshi", "停播： noticeId" + SharedPreferencesUtil.getNoticeId() + "   stopId" + contentId);
+//        LogUtil.w("ceshi", "停播： noticeId" + SharedPreferencesUtil.getNoticeId() + "   stopId" + contentId);
         //如果停播的通知正在播放，并且在插播的内容不在播放，要取消原来的跳转任务并且立即切换下一个内容,这里一定要先切换再删数据库，如果先删，next方法里查询新的position会错误
         if (SharedPreferencesUtil.getNoticeId() == contentId) {
             if (noticeTask != null)
@@ -694,7 +815,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         int publishType = contentBean.getPublishTypeId();
         //推送过来为通知类
         if (publishType == Constants.PUBLISH_TYPE_NOTICE) {
-            if (contentBean.getSpots() == Constants.IS_SPOTS) {
+            if (contentBean.getSpots() == Constants.IS_SPOTS && loadAllValidNotice().size() > 0) {
                 //开始插播通知
                 startInterCutNotice(contentBean);
             } else
@@ -702,7 +823,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         }
         //为资讯类
         if (publishType == Constants.PUBLISH_TYPE_INFORMATION) {
-            if (contentBean.getSpots() == Constants.IS_SPOTS) {
+            if (contentBean.getSpots() == Constants.IS_SPOTS && loadAllValidInformation().size() > 0) {
                 //开始插播资讯
                 startInterCutInfo(contentBean);
             } else if (contentBean.getImageurl() != null && !contentBean.getImageurl().isEmpty()) {
@@ -719,27 +840,29 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         int cutType = contentBean.getImgormo();
 
         //判断之前在播放的是什么内容
-        switch (beforeBean.getImgormo()) {
-            //原本播放的是图文
-            case Constants.IS_IMAGE:
-                if (mSpeechSynthesizer != null)
-                    mSpeechSynthesizer.pause();
-                viewDelegate.setImgFrameVisibility(false);
-                break;
-            //原本播放的是视频
-            case Constants.IS_MOVIE:
-                if (cutType == Constants.IS_IMAGE)
-                    viewDelegate.setVideoFrameVisibility(false);
-                if (videoFragment != null) {
-                    videoView = videoFragment.getVideoView();
-                    LogUtil.w("idceshi", "main里原来的view的id" + videoView.getCurrentPosition() + videoView.toString());
-                    if (videoView != null) {
-                        videoView.pause();
-                        position = videoView.getCurrentPosition();
-                        LogUtil.w("seek", "暂停播放：" + position);
+        if (beforeBean != null) {
+            switch (beforeBean.getImgormo()) {
+                //原本播放的是图文
+                case Constants.IS_IMAGE:
+                    if (mSpeechSynthesizer != null)
+                        mSpeechSynthesizer.pause();
+                    viewDelegate.setImgFrameVisibility(false);
+                    break;
+                //原本播放的是视频
+                case Constants.IS_MOVIE:
+                    if (cutType == Constants.IS_IMAGE)
+                        viewDelegate.setVideoFrameVisibility(false);
+                    if (videoFragment != null) {
+                        videoView = videoFragment.getVideoView();
+                        LogUtil.w("idceshi", "main里原来的view的id" + videoView.getCurrentPosition() + videoView.toString());
+                        if (videoView != null) {
+                            videoView.pause();
+                            position = videoView.getCurrentPosition();
+                            LogUtil.w("seek", "暂停播放：" + position);
+                        }
                     }
-                }
-                break;
+                    break;
+            }
         }
         viewDelegate.setTagContent(contentBean.getTagname());
         cutInfoTime = System.currentTimeMillis() - cutInfoTime;
@@ -757,13 +880,13 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 break;
             //插播的是视频
             case Constants.IS_MOVIE:
-                if (beforeBean.getImgormo() == Constants.IS_IMAGE) {
+                if (beforeBean != null && beforeBean.getImgormo() == Constants.IS_IMAGE) {
                     setLogoAndTitle(false, contentBean.getHeadline());
                     cutVideoFragment = new VideoFragment();
                     viewDelegate.setVisibility(false);
                     beginInterCutTransaction(false, cutVideoFragment, contentBean);
                 }
-                if (beforeBean.getImgormo() == Constants.IS_MOVIE) {
+                if (beforeBean != null && beforeBean.getImgormo() == Constants.IS_MOVIE) {
                     cutVideoFragment = videoFragment;
                     cutVideoFragment.setMContentBean(contentBean);
                     cutVideoFragment.setIsSpots(true);
@@ -779,7 +902,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             public void run() {
                 showOrHideContent(cutType, beforeBean);
                 if (cutInfoTime != 0 && loadAllValidInformation().size() != 1) {
-                    LogUtil.w("shijian", "回复上次的时间：" + (contentBean.getDuration() * 1000 - cutInfoTime + 1500) / 1000);
+//                    LogUtil.w("shijian", "回复上次的时间：" + (contentBean.getDuration() * 1000 - cutInfoTime + 1500) / 1000);
                     countDownInformation((beforeBean.getDuration() * 1000 - cutInfoTime + 1500) / 1000);
                 }
                 viewDelegate.setTagContent(beforeBean.getTagname());
@@ -810,11 +933,11 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         if (cutType == Constants.IS_MOVIE) {
             if (cutVideoFragment != null) {
                 CustomerVideoView cutVideo = cutVideoFragment.getVideoView();
-                if (beforeBean.getImgormo() == Constants.IS_MOVIE) {
+                if (beforeBean != null && beforeBean.getImgormo() == Constants.IS_MOVIE) {
                     //一定要恢复标志位
                     cutVideoFragment.setIsSpots(false);
                 }
-                LogUtil.w("idceshi", "插播完后的viewId" + cutVideo.toString());
+//                LogUtil.w("idceshi", "插播完后的viewId" + cutVideo.toString());
                 if (cutVideo != null) {
                     cutVideo.pause();
                     cutVideo.stopPlayback();
@@ -822,7 +945,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 }
             }
         }
-        if (beforeBean.getImgormo() == Constants.IS_IMAGE) {
+        if (beforeBean != null && beforeBean.getImgormo() == Constants.IS_IMAGE) {
             setLogoAndTitle(true, beforeBean.getHeadline());
             viewDelegate.setImgFrameVisibility(true);
             if (mSpeechSynthesizer != null)
@@ -830,7 +953,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                     mSpeechSynthesizer.speak(beforeBean.getContent());
                 }
         }
-        if (beforeBean.getImgormo() == Constants.IS_MOVIE) {
+        if (beforeBean != null && beforeBean.getImgormo() == Constants.IS_MOVIE) {
             setLogoAndTitle(false, beforeBean.getHeadline());
             viewDelegate.setVideoFrameVisibility(true);
             if (videoView != null) {
@@ -869,7 +992,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             noticeTask.cancel();
         //
         cutNoticeTime = System.currentTimeMillis() - cutNoticeTime;
-        LogUtil.w("shijian", "插播过来距离上次的时间：" + cutNoticeTime);
+//        LogUtil.w("shijian", "插播过来距离上次的时间：" + cutNoticeTime);
         viewDelegate.startMarquee(contentBean);
         insertOrReplaceContent(contentBean);
         interCutNoticeId = contentBean.getId();
@@ -879,7 +1002,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 ContentBean beforeNoticeBean = queryContentById(SharedPreferencesUtil.getNoticeId());
                 viewDelegate.startMarquee(beforeNoticeBean);
                 if (cutNoticeTime != 0 && loadAllValidNotice().size() != 1) {
-                    LogUtil.w("shijian", "回复上次的时间：" + (contentBean.getDuration() * 1000 - cutNoticeTime + 1500) / 1000);
+//                    LogUtil.w("shijian", "回复上次的时间：" + (contentBean.getDuration() * 1000 - cutNoticeTime + 1500) / 1000);
                     countDownNotice((beforeNoticeBean.getDuration() * 1000 - cutNoticeTime + 1500) / 1000);
                 }
                 //插播结束后置成-1
@@ -923,7 +1046,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     private void isNotice(ContentBean contentBean) {
         //如果本来没有存过通知 或者 收到的通知ID和正在播放的ID相同（替换操作），则马上更新界面
         insertOrReplaceContent(contentBean);
-        LogUtil.w("ceshi", loadAllValidNotice().size() + "  " + SharedPreferencesUtil.getNoticeId());
+//        LogUtil.w("ceshi", loadAllValidNotice().size() + "  " + SharedPreferencesUtil.getNoticeId());
         if (SharedPreferencesUtil.getNoticeId() == contentBean.getId()) {
             if (noticeTask != null) {
                 noticeTask.cancel();
@@ -939,7 +1062,9 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
 
 
     //下一条资讯
-    public void nextInformation(boolean noAddPosition) {
+    public synchronized void nextInformation(boolean noAddPosition) {
+        if (interCutInfoTask != null)
+            interCutInfoTask.cancel();
         List<ContentBean> informationList = loadAllValidInformation();
         LogUtil.w("ceshi", "开始下一条：informationList.size()=" + informationList.size() + " " + noAddPosition);
         if (informationList.size() == 0) {
@@ -1076,7 +1201,8 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     }
 
 
-    private void countDownInformation(long duration) {
+    private synchronized void countDownInformation(long duration) {
+        LogUtil.w("ceshi", "资讯倒计时的时间：" + duration);
         informationTask = new TimerTask() {
             @Override
             public void run() {
@@ -1086,8 +1212,10 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         };
         if (duration >= 0)
             timer.schedule(informationTask, duration * 1000);
+        if (duration < 0)
+            timer.schedule(informationTask, 15000);
         cutInfoTime = System.currentTimeMillis();
-        LogUtil.w("shijian", "启动线程的时间:" + cutInfoTime);
+//        LogUtil.w("shijian", "启动线程的时间:" + cutInfoTime);
     }
 
     public SpeechSynthesizer getSpeechSynthesizer() {

@@ -14,7 +14,6 @@ import com.app.tvproject.utils.NetUtil;
 import com.baidu.tts.client.SpeechSynthesizer;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -62,15 +61,19 @@ public class ImgWithTextFragment extends FragmentPresenter<ImgWithTextDelegate> 
 
     private void setBannerImgLoader(ContentBean contentBean) {
         List<String> imgUrlList = new ArrayList<>();
-        String[] imgUrl = contentBean.getImageurl().split(",");
-        if (!NetUtil.isConnectNoToast()) {
-            for (String anImgUrl : imgUrl) {
-                if (!(anImgUrl.replaceAll(" ", "").substring(0, 4).equals("http"))) {
+        String[] imgUrl = contentBean.getImageurl().replaceAll(" ", "").split(",");
+        for (String anImgUrl : imgUrl) {
+            if(!NetUtil.isConnectNoToast()) {
+                if (!(anImgUrl.replaceAll(" ", "").substring(0, 4).equals("http")) && !anImgUrl.isEmpty()) {
                     imgUrlList.add(anImgUrl);
                 }
             }
-        } else
-            Collections.addAll(imgUrlList, imgUrl);
+            else {
+                if(!anImgUrl.isEmpty()){
+                    imgUrlList.add(anImgUrl);
+                }
+            }
+        }
         viewDelegate.showImgBanner(imgUrlList);
     }
 

@@ -25,6 +25,7 @@ public class JpushCustomerReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+//        ToastUtil.l("触发推送了，触发推送了，触发推送了，触发推送了触发推送了，触发推送了，");
         if (null == nm) {
             nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         }

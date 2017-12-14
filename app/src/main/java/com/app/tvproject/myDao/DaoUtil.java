@@ -20,7 +20,7 @@ import java.util.List;
 public class DaoUtil {
     private static DaoManager mManager;
 
-    public DaoUtil(Context context) {
+    public static void initDao(Context context){
         mManager = DaoManager.getInstance();
         mManager.init(context);
     }
@@ -235,7 +235,7 @@ public class DaoUtil {
      */
     public static List<ContentBean> loadAllValidNotice() {
         long noticeId = SharedPreferencesUtil.getNoticeId();
-        LogUtil.w("ceshi", "查询数据库noticeId为：" + noticeId);
+//        LogUtil.w("ceshi", "查询数据库noticeId为：" + noticeId);
         List<ContentBean> unValidList;
         QueryBuilder<ContentBean> queryBuilder = mManager.getDaoSession().getContentBeanDao().queryBuilder();
         if (noticeId != 0 && noticeId != -1) {
@@ -248,7 +248,7 @@ public class DaoUtil {
         if (unValidList.size() != 0) {
             deleteContentList(unValidList);
         }
-        LogUtil.w("ceshi", "保存通知的新下标：" + loadAllNotice().indexOf(queryContentById(noticeId)));
+//        LogUtil.w("ceshi", "保存通知的新下标：" + loadAllNotice().indexOf(queryContentById(noticeId)));
         //查询正在播放的内容在最新的list数组的位置并保存（不能简单的+1求余来确定现在播放的position，会出错）
         SharedPreferencesUtil.saveNoticePosition(loadAllNotice().indexOf(queryContentById(noticeId)));
         return loadAllNotice();

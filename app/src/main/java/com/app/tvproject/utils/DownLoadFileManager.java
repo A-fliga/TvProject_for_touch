@@ -1,8 +1,9 @@
 package com.app.tvproject.utils;
 
-import android.os.Environment;
+import android.app.ProgressDialog;
 import android.support.annotation.NonNull;
 
+import com.app.tvproject.constants.Constants;
 import com.app.tvproject.mvp.model.data.ContentBean;
 
 import java.io.File;
@@ -11,6 +12,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.concurrent.BlockingQueue;
@@ -29,17 +32,8 @@ import static com.app.tvproject.myDao.DaoUtil.queryContentById;
  */
 
 public class DownLoadFileManager {
-
-    private static String PNG_CONTENT_TYPE = "image/png";
-    private static String MP4_CONTENT_TYPE = "video/mp4";
-    private static String JPG_CONTENT_TYPE = "image/jpg";
-    private static String JPEG_CONTENT_TYPE = "image/jpeg";
-
     private Boolean stopDownLoad = false;
-    private static String fileSuffix = "";
-
     private long stopId = 0;
-    private static final String TAG = "DownLoadFileManager";
     private String downloadDir; // 文件保存路径
     private static DownLoadFileManager instance; // 单例
 
@@ -59,11 +53,7 @@ public class DownLoadFileManager {
 
     private DownLoadFileManager() {
         // 初始化下载路径
-        downloadDir = Environment.getExternalStorageDirectory().toString() + File.separator + "TvDownload";
-        File file = new File(downloadDir);
-        if (!file.exists()){
-            file.mkdirs();
-        }
+        downloadDir = Constants.DOWNLOAD_DIR + "TvDownload";
         executor = new SerialExecutor();
     }
 
@@ -74,25 +64,6 @@ public class DownLoadFileManager {
     public void setStopId(long id) {
         this.stopId = id;
     }
-
-//    @Override
-//    public void stopPlayThis(ContentBean contentBean) {
-//        LogUtil.w("download", "停止下载：" + contentBean.getHeadline() + "的内容");
-////        if(is != null ) {
-////            try {
-////                is.close();
-////            } catch (IOException e) {
-////                e.printStackTrace();
-////            }
-////        }
-////        if(os != null){
-////            try {
-////                os.close();
-////            } catch (IOException e) {
-////                e.printStackTrace();
-////            }
-////        }
-//    }
 
 
     /**
@@ -123,9 +94,6 @@ public class DownLoadFileManager {
             }
         }
 
-        public void stopDownLoad() {
-            mTasks.remove();
-        }
     }
 
     /**
@@ -141,7 +109,7 @@ public class DownLoadFileManager {
     }
 
     /**
-     * 添加下载任务
+     * 添加普通下载任务
      */
     public void addDownloadTask(int httpIndex, ContentBean contentBean) {
         if (NetUtil.isConnectNoToast()) {
@@ -149,33 +117,94 @@ public class DownLoadFileManager {
         }
     }
 
+
+    //全部删掉之前下载的文件
+    public void deleteFilesByDirectory(String path) {
+        File directory = new File(path);
+        if (directory.exists() && directory.isDirectory()) {
+            for (File item : directory.listFiles()) {
+                item.delete();
+            }
+        }
+    }
+
+
+    /**
+     * 下载APK
+     */
+    private String apkPath;
+
+    public String getApkPath() {
+        return apkPath;
+    }
+
+    public Boolean downLoadApk(ProgressDialog pd, String appUtl) {
+        if (NetUtil.isConnectNoToast()) {
+            String apkDirPath = Constants.DOWNLOAD_DIR + "apkDownload";
+            deleteFilesByDirectory(apkDirPath);
+            File apkDir = new File(apkDirPath);
+            if (!apkDir.exists()) {
+                apkDir.mkdirs();
+            }
+            try {
+                URL url = new URL(appUtl);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                apkPath = apkDirPath + File.separator + System.currentTimeMillis() + ".apk";
+                File apkFile = new File(apkPath);
+                if (!apkFile.exists()) {
+                    apkFile.createNewFile();
+                }
+                InputStream is = url.openStream();
+                OutputStream os = new FileOutputStream(apkPath);
+                pd.setMax(conn.getContentLength());
+
+
+                byte[] fileByte = new byte[4096];
+                int len;
+                int per = 0;
+                while ((len = is.read(fileByte)) != -1) {
+                    os.write(fileByte, 0, len);
+                    per += len;
+                    pd.setProgress(per);
+                    LogUtil.w("download", "apk下载" + per);
+                }
+                is.close();
+                os.close();
+                return true;
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+                return false;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return false;
+            }
+
+        } else return false;
+    }
+
     /**
      * 下载文件
      */
+
     private void download(int downloadPosition, ContentBean contentBean) {
         String[] downLoadUrl = contentBean.getImageurl().replaceAll(" ", "").split(",");
         for (int i = 0; i < downLoadUrl.length; i++) {
             //是对应位置，且以http开头，且数据库的数据还在，才去提交下载
-            if (i == downloadPosition && downLoadUrl[downloadPosition].substring(0, 4).equals("http")
+            if (i == downloadPosition && !downLoadUrl[downloadPosition].isEmpty() && downLoadUrl[downloadPosition].substring(0, 4).equals("http")
                     && queryContentById(contentBean.getId()) != null) {
                 LogUtil.w("download", "提交下载" + contentBean.getHeadline() + "的第" + downloadPosition + "条连接");
                 LogUtil.w("download", "看看数据" + contentBean.getImageurl());
                 String path = downLoadUrl[i];
                 if (path != null && !path.isEmpty()) {
+                    //判断文件类型
+                    File downloadFile = new File(path);
+                    String downFileName = downloadFile.getName();
+                    String fileSuffix = downFileName.substring(downFileName.lastIndexOf("."), downFileName.length());
+                    File fileDir = new File(downloadDir);
+                    if (!fileDir.exists()) {
+                        fileDir.mkdirs();
+                    }
                     //加进下载数组
-                    if (path.substring(path.length() - 3, path.length()).equals("mp4"))
-                        fileSuffix = ".mp4";
-                    else fileSuffix = ".png";
-//                    if (type.equals(PNG_CONTENT_TYPE)) {
-//                        fileSuffix = ".png";
-//                    } else if (type.equals(MP4_CONTENT_TYPE)) {
-//                        fileSuffix = ".mp4";
-//                    } else if (type.equals(JPG_CONTENT_TYPE)) {
-//                        fileSuffix = ".jpeg";
-//                    } else if (type.equals(JPEG_CONTENT_TYPE)) {
-//                        fileSuffix = ".jpg";
-//                    }
-                    // 其他同上 自己判断加入
                     String fileName = downloadDir + File.separator + System.currentTimeMillis() + fileSuffix;
 
                     try {

@@ -14,6 +14,7 @@ import com.app.tvproject.R;
 import com.app.tvproject.mvp.model.data.ContentBean;
 import com.app.tvproject.mvp.model.data.WeatherBean;
 import com.app.tvproject.utils.InitDateUtil;
+import com.app.tvproject.utils.LogUtil;
 
 /**
  * Created by www on 2017/11/16.
@@ -44,7 +45,13 @@ public class MainActivityDelegate extends ViewDelegate {
 
     //初始化日期
     public void initDate() {
-        InitDateUtil.initDate(dateTv);
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                InitDateUtil.initDate(dateTv);
+            }
+        });
+
     }
 
     //初始化时钟
@@ -178,7 +185,13 @@ public class MainActivityDelegate extends ViewDelegate {
 
     //初始化农历
     public void initLunar() {
-        InitDateUtil.initLunar(lunarTv);
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                InitDateUtil.initLunar(lunarTv);
+            }
+        });
+
     }
 
     //初始化天气
@@ -194,7 +207,8 @@ public class MainActivityDelegate extends ViewDelegate {
     //开始跑马灯动画
     public void startMarquee(ContentBean contentBean) {
         getActivity().runOnUiThread(() -> {
-            setNoticeNull();
+            //这里设置字体颜色是为了切换的时候看起来不会闪一下
+            notice_content.setTextColor(R.color.color_black_gray);
             notice_content.setText(contentBean.getContent().replaceAll(" ", "").replaceAll("\r|\n", ""));
             duration = contentBean.getDuration();
             if (tranRunnableQueen == null) {
@@ -220,7 +234,23 @@ public class MainActivityDelegate extends ViewDelegate {
             TranslateAnimation mRightToLeftAnim = new TranslateAnimation(mNoticeScrollView.getWidth(), -notice_content.getWidth(), 0, 0);
             mRightToLeftAnim.setRepeatCount(Animation.INFINITE);
             mRightToLeftAnim.setInterpolator(new LinearInterpolator());
+//            LogUtil.w("daojishi", "动画倒计时：" + duration);
             mRightToLeftAnim.setDuration(duration * 1000);
+            mRightToLeftAnim.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                    notice_content.setTextColor(getActivity().getResources().getColor(R.color.color_white));
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+
+                }
+            });
             notice_content.startAnimation(mRightToLeftAnim);
         }
     }
