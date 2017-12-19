@@ -44,21 +44,6 @@ public class SharedPreferencesUtil {
 
 
     /**
-     * 保存上次拉取新数据列表的时间
-     */
-    public static void saveLastPushTime(long time){
-        if(sharedPreference == null) {
-            sharedPreference = MyApplication.getContext()
-                    .getSharedPreferences(Constants.TV_PROJECT_SHARED_NAME, Context.MODE_PRIVATE);
-        }
-        editor = sharedPreference.edit();
-        editor.putLong(Constants.INFORMATION_ID, time);
-        editor.apply();
-    }
-
-
-
-    /**
      * 保存正在播放的资讯ID
      */
     public static void saveInformationId(long informationId){

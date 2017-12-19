@@ -520,6 +520,10 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                         afterBean.setImageurl(beforeBean.getImageurl());
                     }
                 }
+                //编辑过，要把原来的多余数据删了
+                else {
+                    DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getImageurl());
+                }
             }
             beforeId.removeAll(sameId);
             for (int i = 0; i < beforeId.size(); i++) {
@@ -535,6 +539,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
             initInfo();
             initNotice();
         }
