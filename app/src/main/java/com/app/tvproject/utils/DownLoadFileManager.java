@@ -144,7 +144,7 @@ public class DownLoadFileManager {
             deleteFilesByDirectory(apkDirPath);
             File apkDir = new File(apkDirPath);
             if (!apkDir.exists()) {
-                apkDir.mkdirs();
+                LogUtil.d("xiazai",apkDir.mkdirs()+"");
             }
             try {
                 URL url = new URL(appUtl);
@@ -202,7 +202,7 @@ public class DownLoadFileManager {
                     String fileSuffix = downFileName.substring(downFileName.lastIndexOf("."), downFileName.length());
                     File fileDir = new File(downloadDir);
                     if (!fileDir.exists()) {
-                        fileDir.mkdirs();
+                       fileDir.mkdirs();
                     }
                     //加进下载数组
                     String fileName = downloadDir + File.separator + System.currentTimeMillis() + fileSuffix;

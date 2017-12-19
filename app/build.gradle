@@ -68,8 +68,8 @@ android {
     buildTypes {
 
         debug {
-            buildConfigField "String", "HOST", '"http://119.23.235.164:8081/"'
-
+//            buildConfigField "String", "HOST", '"http://119.23.235.164:8081/"'
+            buildConfigField "String", "HOST", '"http://192.168.5.147:8082/"'
 //            buildConfigField "String", "HOST", '"http://192.168.5.147:8082/"'
 //            buildConfigField "String", "HOST", '"http://120.77.172.70:8081/"'
         }
@@ -101,8 +101,8 @@ dependencies {
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.android.support:recyclerview-v7:25.3.1'
-    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support:recyclerview-v7:25.3.0'
+    compile 'com.android.support:appcompat-v7:25.3.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     testCompile 'junit:junit:4.12'
     compile 'com.bigkoo:convenientbanner:2.0.5'
@@ -115,22 +115,20 @@ dependencies {
     //fresco
     compile 'com.facebook.fresco:fresco:0.12.0'
     //rxjava rxandroid
-    compile "io.reactivex:rxandroid:1.0.1"
-    compile "io.reactivex:rxjava:1.1.1"
+    compile 'io.reactivex:rxandroid:1.0.1'
+    compile 'io.reactivex:rxjava:1.1.1'
     //    rxpermission
-    compile "com.tbruyelle.rxpermissions:rxpermissions:0.9.3@aar"
+    compile 'com.tbruyelle.rxpermissions:rxpermissions:0.9.3@aar'
     //    rx preferences
-    compile "com.f2prateek.rx.preferences:rx-preferences:1.0.1"
+    compile 'com.f2prateek.rx.preferences:rx-preferences:1.0.1'
     //retrofit
-    compile "com.squareup.retrofit2:retrofit:2.2.0"
-    compile "com.squareup.retrofit2:converter-gson:2.2.0"
-    compile "com.squareup.retrofit2:adapter-rxjava:2.2.0"
-    compile "com.squareup.okhttp3:logging-interceptor:3.4.1"
-//    compile files('libs/Msc.jar')
+    compile 'com.squareup.retrofit2:retrofit:2.2.0'
+    compile 'com.squareup.retrofit2:converter-gson:2.2.0'
+    compile 'com.squareup.retrofit2:adapter-rxjava:2.2.0'
+    compile 'com.squareup.okhttp3:logging-interceptor:3.4.1'
+    //    compile files('libs/Msc.jar')
     //操作数据库
     compile 'org.greenrobot:greendao:3.2.0'
     //    compile 'com.oushangfeng:MarqueeLayout:1.0.4'
-
-//    compile 'com.shuyu:GSYVideoPlayer:2.1.1'
-
+    //    compile 'com.shuyu:GSYVideoPlayer:2.1.1'
 }

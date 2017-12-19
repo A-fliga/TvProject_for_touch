@@ -40,17 +40,13 @@ public class MainActivityDelegate extends ViewDelegate {
     }
 
     public void hideMainRl(Boolean hide) {
-        get(R.id.main_rl).setVisibility(hide ? View.GONE : View.VISIBLE);
+        getActivity().runOnUiThread(() -> get(R.id.main_rl).setVisibility(hide ? View.GONE : View.VISIBLE));
+
     }
 
     //初始化日期
     public void initDate() {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                InitDateUtil.initDate(dateTv);
-            }
-        });
+        getActivity().runOnUiThread(() -> InitDateUtil.initDate(dateTv));
 
     }
 
@@ -144,8 +140,8 @@ public class MainActivityDelegate extends ViewDelegate {
     public void setTitleType(Boolean isImg) {
         getActivity().runOnUiThread(() -> {
             if (isImg) {
-                tv_logo_title.setTextColor(R.color.color_black);
-            } else tv_logo_title.setTextColor(R.color.color_title);
+                tv_logo_title.setTextColor(getActivity().getResources().getColor(R.color.color_black));
+            } else tv_logo_title.setTextColor(getActivity().getResources().getColor(R.color.color_title));
         });
 
     }
@@ -208,7 +204,7 @@ public class MainActivityDelegate extends ViewDelegate {
     public void startMarquee(ContentBean contentBean) {
         getActivity().runOnUiThread(() -> {
             //这里设置字体颜色是为了切换的时候看起来不会闪一下
-            notice_content.setTextColor(R.color.color_black_gray);
+            notice_content.setTextColor(getActivity().getResources().getColor(R.color.color_black_gray));
             notice_content.setText(contentBean.getContent().replaceAll(" ", "").replaceAll("\r|\n", ""));
             duration = contentBean.getDuration();
             if (tranRunnableQueen == null) {

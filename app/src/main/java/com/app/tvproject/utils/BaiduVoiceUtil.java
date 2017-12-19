@@ -1,6 +1,7 @@
 package com.app.tvproject.utils;
 
 import android.media.AudioManager;
+import android.os.Environment;
 
 import com.app.tvproject.constants.Constants;
 import com.baidu.tts.client.SpeechError;
@@ -40,7 +41,7 @@ public class BaiduVoiceUtil {
 
     public static void initialEnv() {
         if (mSampleDirPath == null) {
-            mSampleDirPath = Constants.DOWNLOAD_DIR + SAMPLE_DIR_NAME;
+            mSampleDirPath = Constants.DOWNLOAD_DIR+ SAMPLE_DIR_NAME;
         }
         File file = new File(mSampleDirPath);
         if (!file.exists()) {

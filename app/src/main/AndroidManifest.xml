@@ -19,8 +19,6 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-    <!-- 屏幕熄灭 -->
-    <uses-permission android:name="android.permission.DEVICE_POWER"/>
     <!--wifi信息-->
     <uses-permission android:name="android.permission.access_wifi_state" />
     <uses-permission android:name="android.permission.access_network_state" />

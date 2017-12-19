@@ -106,6 +106,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         DownLoadFileManager.getInstance().stopDownLoad(false);
+        viewDelegate.hideMainRl(true);
 //        try {
 //            Runtime.getRuntime().exec("su");
         checkUpdate();
@@ -146,7 +147,6 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     private void noUpdate() {
         //首次进入页面判断是否配置了设备和推送信息
         if (noSettings()) {
-            viewDelegate.hideMainRl(true);
             DialogUtil.showDialog(this, selectSettingsDialog);
         } else {
             viewDelegate.hideMainRl(false);
@@ -225,18 +225,21 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
 
 
     private void initServiceData(Boolean deleteAll) {
+        viewDelegate.hideMainRl(false);
+        //初始化百度语音
         initBaiDuVoice();
         //每次进入app，要拉取一遍服务器的播放列表
-        getPublishList(deleteAll);
+        getPublishList(deleteAll, false);
 
         //注册eventBus
         EventBus.getDefault().register(this);
 
+        //清空数据库和shared，测试用
         Button button = viewDelegate.get(R.id.clear);
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                deleteDataAndShared(true);
+                deleteDataAndShared(true, true);
             }
         });
 
@@ -254,10 +257,13 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         getNowWeather();
     }
 
-    private void deleteDataAndShared(Boolean deleteFile) {
+    private void deleteDataAndShared(Boolean deleteFile, Boolean clearShared) {
         //清空保存的下标和数据库内容
         deleteAll();
-        SharedPreferencesUtil.resetShared();
+        if (clearShared) {
+            LogUtil.d("shuaxin", "清除shared");
+            SharedPreferencesUtil.resetShared();
+        }
         //是否要删掉原来的全部文件
         if (deleteFile)
             DownLoadFileManager.getInstance().deleteFilesByDirectory(DownLoadFileManager.getInstance().getDownloadDir());
@@ -278,9 +284,9 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         return (alias == null || alias.isEmpty() || eqId == -1);
     }
 
-    private void getPublishList(Boolean deleteAll) {
+    private void getPublishList(Boolean deleteAll, Boolean clearShared) {
         if (NetUtil.isConnectNoToast())
-            getPublishDetailList(eqId, deleteAll);
+            getPublishDetailList(eqId, deleteAll, clearShared);
         else {
             // 没网络就只播放本地数据库的内容
             startLocalDataPlay();
@@ -396,7 +402,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         } else finish();
     }
 
-    private void getPublishDetailList(long equipId, Boolean deleteAll) {
+    private void getPublishDetailList(long equipId, Boolean deleteAll, Boolean clearShared) {
 
         PublicModel.getInstance().getPublishList(new Subscriber<PublishListBean>() {
             @Override
@@ -421,7 +427,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 if (deleteAll)
                     refreshData(serverList);
                 else
-                    compareWithServer(serverList);
+                    compareWithServer(serverList, clearShared);
                 NetBroadCastReceiver.setNetChangeListener(MainActivity.this);
             }
         }, String.valueOf(equipId), null);
@@ -429,7 +435,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
 
 
     private void refreshData(List<List<ContentBean>> serverList) {
-        deleteDataAndShared(true);
+        deleteDataAndShared(true, true);
         for (int i = 0; i < serverList.size(); i++) {
             if (serverList.get(i).size() != 0) {
                 insertOrReplaceList(serverList.get(i));
@@ -456,7 +462,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
      * <p>
      * 之后调用init方法 搞定
      */
-    private void compareWithServer(List<List<ContentBean>> serverList) {
+    private void compareWithServer(List<List<ContentBean>> serverList, Boolean clearShared) {
         //之前本地的集合和集合Id
         List<ContentBean> beforeList = loadAllValidInformation();
         List<Long> beforeId = new ArrayList<>();
@@ -494,7 +500,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             List<Integer> sameIdIndex = new ArrayList<>();
             for (int j = 0; j < afterId.size(); j++) {
                 for (int i = 0; i < beforeId.size(); i++) {
-                    if (Objects.equals(beforeId.get(i), afterId.get(j))) {
+                    if (beforeId.get(i).equals(afterId.get(j))) {
                         LogUtil.w("测试刷新", "有相同的id，id值为：" + afterId.get(j) + "标题为:" + queryContentById(afterId.get(j)).getHeadline() + "在after的下标为:" + j);
                         sameId.add(afterId.get(j));
                         sameIdIndex.add(j);
@@ -520,12 +526,12 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 ContentBean beforeBean = queryContentById(beforeId.get(i));
                 DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getImageurl());
             }
-            deleteDataAndShared(false);
+            deleteDataAndShared(false, clearShared);
             insertOrReplaceList(afterList);
             insertOrReplaceList(noticeList);
             startDownLoad();
             try {
-                Thread.sleep(3000);
+                Thread.sleep(1500);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -635,8 +641,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             //处理清空缓存信息
             case "emptyNotice":
                 //清空内容缓存
-                SharedPreferencesUtil.resetShared();
-                deleteAll();
+                deleteDataAndShared(true, true);
                 break;
             case "updateNotice":
                 Log.d("sss", "updateNotice");
@@ -655,7 +660,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                     interCutInfoTask.cancel();
                 if (interCutNoticeTask != null)
                     interCutNoticeTask.cancel();
-                getPublishList(false);
+                getPublishList(false, true);
                 break;
             //停播
             case "stopPlay":
@@ -1254,7 +1259,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 interCutInfoTask.cancel();
             if (interCutNoticeTask != null)
                 interCutNoticeTask.cancel();
-            getPublishList(false);
+            getPublishList(false, false);
         }
     }
 }
