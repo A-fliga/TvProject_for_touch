@@ -27,8 +27,7 @@ public class MyApplication extends Application {
         JPushInterface.setDebugMode(true);
 
         //静默推送
-//        JPushInterface.setSilenceTime(this, 0, 0, 23, 59);
-
+        JPushInterface.setSilenceTime(this, 0, 0, 23, 59);
     }
 
     public static Context getContext() {

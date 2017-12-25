@@ -20,7 +20,7 @@ import java.util.List;
 public class DaoUtil {
     private static DaoManager mManager;
 
-    public static void initDao(Context context){
+    public static void initDao(Context context) {
         mManager = DaoManager.getInstance();
         mManager.init(context);
     }
@@ -136,7 +136,7 @@ public class DaoUtil {
         boolean flag = false;
         ContentBean contentBean = queryContentById(id);
         if (contentBean != null) {
-            if (contentBean.getPublishTypeId() == Constants.PUBLISH_TYPE_INFORMATION) {
+            if (contentBean.getPublishTypeId() == Constants.PUBLISH_TYPE_INFORMATION || contentBean.getPublishTypeId() == Constants.PUBLISH_TYPE_ADVERT) {
                 DownLoadFileManager.getInstance().addDeleteTask(queryContentById(id).getImageurl());
             }
             try {
@@ -215,10 +215,12 @@ public class DaoUtil {
         List<ContentBean> unValidList;
         QueryBuilder<ContentBean> queryBuilder = mManager.getDaoSession().getContentBeanDao().queryBuilder();
         if (informationId != 0 && informationId != -1) {
-            unValidList = queryBuilder.where(queryBuilder.and(ContentBeanDao.Properties.PublishTypeId.eq(Constants.PUBLISH_TYPE_INFORMATION),
+            unValidList = queryBuilder.where(queryBuilder.and(queryBuilder.or(ContentBeanDao.Properties.PublishTypeId.eq(Constants.PUBLISH_TYPE_INFORMATION),
+                    ContentBeanDao.Properties.PublishTypeId.eq(Constants.PUBLISH_TYPE_ADVERT)),
                     ContentBeanDao.Properties.Endtime.lt(System.currentTimeMillis()), ContentBeanDao.Properties.Id.notEq(informationId))).list();
         } else {
-            unValidList = queryBuilder.where(queryBuilder.and(ContentBeanDao.Properties.PublishTypeId.eq(Constants.PUBLISH_TYPE_INFORMATION),
+            unValidList = queryBuilder.where(queryBuilder.and(queryBuilder.or(ContentBeanDao.Properties.PublishTypeId.eq(Constants.PUBLISH_TYPE_INFORMATION),
+                    ContentBeanDao.Properties.PublishTypeId.eq(Constants.PUBLISH_TYPE_ADVERT)),
                     ContentBeanDao.Properties.Endtime.lt(System.currentTimeMillis()))).list();
         }
         if (unValidList.size() != 0) {
@@ -260,14 +262,16 @@ public class DaoUtil {
     private static List<ContentBean> loadAllNotice() {
         return mManager.getDaoSession().getContentBeanDao().queryBuilder().where(ContentBeanDao.Properties.
                 PublishTypeId.eq(Constants.PUBLISH_TYPE_NOTICE)).orderAsc(ContentBeanDao.Properties.Sort)
-                .orderDesc(ContentBeanDao.Properties.Belongto).list();
+                .orderDesc(ContentBeanDao.Properties.Audiencebelongto).list();
     }
 
     //无其他条件查询所有information
     private static List<ContentBean> loadAllInformation() {
-        return mManager.getDaoSession().getContentBeanDao().queryBuilder().where(ContentBeanDao.Properties.
-                PublishTypeId.eq(Constants.PUBLISH_TYPE_INFORMATION)).orderAsc(ContentBeanDao.Properties.Sort)
-                .orderDesc(ContentBeanDao.Properties.Belongto).list();
+        QueryBuilder<ContentBean> queryBuilder = mManager.getDaoSession().getContentBeanDao().queryBuilder();
+        return queryBuilder.where(queryBuilder.or(ContentBeanDao.Properties.
+                PublishTypeId.eq(Constants.PUBLISH_TYPE_INFORMATION), ContentBeanDao.Properties.
+                PublishTypeId.eq(Constants.PUBLISH_TYPE_ADVERT))).orderAsc(ContentBeanDao.Properties.Sort)
+                .orderDesc(ContentBeanDao.Properties.Audiencebelongto).list();
     }
 
 }

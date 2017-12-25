@@ -4,15 +4,15 @@
     package="com.app.tvproject">
 
     <!--获取手机录音机使用权限，听写、识别、语义理解需要用到此权限 -->
-    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!--获取当前wifi状态 -->
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <!--允许程序改变网络连接状态 -->
-    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <!--配置权限，用来记录应用配置信息 -->
-    <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <!--读取手机信息权限 -->
-    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -27,7 +27,11 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 
-
+    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.RESTART_PACKAGES" />
+    <uses-permission android:name="android.permission.INSTALL_PACKAGES" />
 
 
     <application
@@ -35,15 +39,15 @@
         android:allowBackup="true"
         android:icon="@mipmap/app_icon"
         android:label="@string/app_name"
+        android:largeHeap="true"
         android:roundIcon="@mipmap/app_icon"
         android:supportsRtl="true"
-        android:largeHeap="true"
         android:theme="@style/AppTheme.NoActionBar">
 
         <activity
             android:name=".mvp.presenter.activity.MainActivity"
-            android:screenOrientation="landscape"
-            android:configChanges="orientation|keyboardHidden|screenSize">
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -51,9 +55,10 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".mvp.presenter.activity.ChooseSettingsActivity"
-            android:screenOrientation="landscape"
-            android:configChanges="orientation|keyboardHidden|screenSize"/>
+        <activity
+            android:name=".mvp.presenter.activity.ChooseSettingsActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:screenOrientation="landscape" />
 
 
         <!--极光推送 接受自定义消息-->
@@ -67,21 +72,33 @@
                 <action android:name="cn.jpush.android.intent.NOTIFICATION_OPENED" />
                 <action android:name="cn.jpush.android.intent.NOTIFICATION_CLICK_ACTION" />
                 <action android:name="cn.jpush.android.intent.CONNECTION" />
+
                 <category android:name="com.app.tvproject" />
             </intent-filter>
         </receiver>
 
         <!-- 网络监听广播 -->
-        <receiver android:name=".receiver.NetBroadCastReceiver" >
+        <receiver android:name=".receiver.NetBroadCastReceiver">
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
         </receiver>
 
-        <service android:name=".service.TimeService"/>
-        <service android:name=".service.AlarmService"/>
-<receiver android:name=".receiver.AlarmTimeReceiver"
-    android:enabled="true"/>
+        <!-- 重新安装了Apk的广播 -->
+        <receiver android:name=".receiver.UpdateApkReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_REPLACED" />
+                <data android:scheme="package" />
+            </intent-filter>
+
+        </receiver>
+
+        <service android:name=".service.TimeService" />
+        <service android:name=".service.AlarmService" />
+
+        <receiver
+            android:name=".receiver.AlarmTimeReceiver"
+            android:enabled="true" />
 
     </application>
 

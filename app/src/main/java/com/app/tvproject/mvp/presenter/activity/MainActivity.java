@@ -54,7 +54,6 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -107,15 +106,15 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         DownLoadFileManager.getInstance().stopDownLoad(false);
         viewDelegate.hideMainRl(true);
-//        try {
-//            Runtime.getRuntime().exec("su");
-        checkUpdate();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            Runtime.getRuntime().exec("su");
+             initAllData();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    private void checkUpdate() {
+    private void checkUpdate(Boolean deleteAll) {
         if (NetUtil.isConnectNoToast()) {
             PublicModel.getInstance().getUpdateInfo(new Subscriber<BaseEntity<UpdateBean>>() {
                 @Override
@@ -125,49 +124,48 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
 
                 @Override
                 public void onError(Throwable e) {
-                    noUpdate();
+                    noUpdate(deleteAll);
                 }
 
                 @Override
                 public void onNext(BaseEntity<UpdateBean> updateBeanBaseEntity) {
-                    if (Float.parseFloat(AppUtil.getVersionName()) < Float.parseFloat(updateBeanBaseEntity.getResult().versionsnum)) {
+                    if (updateBeanBaseEntity.getResult() != null && Float.parseFloat(AppUtil.getVersionName()) < Float.parseFloat(updateBeanBaseEntity.getResult().versionsnum)) {
                         //开始下载更新并安装
                         new Thread(() -> {
                             Looper.prepare();
-                            startUpdate(updateBeanBaseEntity.getResult().appurl);
+                            startUpdate(updateBeanBaseEntity.getResult().appurl, deleteAll);
                         }).start();
                     } else {
-                        noUpdate();
+                        noUpdate(deleteAll);
                     }
                 }
             });
-        } else noUpdate();
+        } else {
+            noUpdate(deleteAll);
+        }
     }
 
-    private void noUpdate() {
+    private void initAllData() {
         //首次进入页面判断是否配置了设备和推送信息
         if (noSettings()) {
-            DialogUtil.showDialog(this, selectSettingsDialog);
+            runOnUiThread(() -> DialogUtil.showDialog(MainActivity.this, selectSettingsDialog));
         } else {
-            viewDelegate.hideMainRl(false);
             initServiceData(false);
         }
     }
 
-    private void startUpdate(String appUrl) {
+    private void startUpdate(String appUrl, Boolean deleteAll) {
         ProgressDialog pd = DialogUtil.showProgressDialog(this);
         runOnUiThread(pd::show);
         if (DownLoadFileManager.getInstance().downLoadApk(pd, appUrl) && DownLoadFileManager.getInstance().getApkPath() != null) {
             closeDialog(pd);
-            if (startInstallApk(DownLoadFileManager.getInstance().getApkPath())) {
-                //TODO 这里要加上重新启动
-                ToastUtil.s("安装成功");
-            } else {
-                noUpdate();
+            if (!startInstallApk(DownLoadFileManager.getInstance().getApkPath())) {
+                ToastUtil.s("安装失败");
+                noUpdate(deleteAll);
             }
         } else {
             closeDialog(pd);
-            noUpdate();
+            noUpdate(deleteAll);
         }
     }
 
@@ -183,10 +181,10 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         DataOutputStream dataOutputStream = null;
         BufferedReader errorStream = null;
         try {
+            ToastUtil.l("正在执行安装");
             // 申请su权限
             Process process = Runtime.getRuntime().exec("su");
             dataOutputStream = new DataOutputStream(process.getOutputStream());
-//            dataOutputStream.writeBytes("export LD_LIBRARY_PATH=/vendor/lib:/system/lib\n");
             // 执行pm install命令
             String command = "pm install -r " + apkPath + "\n";
             dataOutputStream.write(command.getBytes(Charset.forName("utf-8")));
@@ -225,23 +223,24 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
 
 
     private void initServiceData(Boolean deleteAll) {
-        viewDelegate.hideMainRl(false);
         //初始化百度语音
         initBaiDuVoice();
+        viewDelegate.hideMainRl(true);
+        checkUpdate(deleteAll);
+    }
+
+    private void noUpdate(Boolean deleteAll) {
+        //显示出视图
+        viewDelegate.hideMainRl(false);
         //每次进入app，要拉取一遍服务器的播放列表
         getPublishList(deleteAll, false);
 
         //注册eventBus
         EventBus.getDefault().register(this);
 
-        //清空数据库和shared，测试用
+        //清空数据库和shared及所有缓存文件，测试用
         Button button = viewDelegate.get(R.id.clear);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                deleteDataAndShared(true, true);
-            }
-        });
+        button.setOnClickListener(v -> deleteDataAndShared(true, true));
 
         // 更新设备的连接状态
         TimerTask task = new TimerTask() {
@@ -310,12 +309,10 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 nextNotice(false);
             }
         };
-//        LogUtil.w("daojishi", "倒计时时间：" + duration);
         if (duration >= 0)
             timer.schedule(noticeTask, duration * 1000);
         else timer.schedule(noticeTask, 15000);
         cutNoticeTime = System.currentTimeMillis();
-//        LogUtil.w("shijian", "启动线程的时间:" + cutNoticeTime);
     }
 
     // 这里要注意正在播放的内容的下标的处理,noAddPosition：是否不加1，true为不加
@@ -339,7 +336,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
 //                LogUtil.w("ceshi", "开始进入倒计时");
                 countDownNotice(contentBean.getDuration());
             }
-            //避免当前bean为空但list还有内容的情况
+            //避免当前bean为空但list还有内容的意外情况
             else if (loadAllValidNotice().size() != 0) {
                 nextNotice(false);
             }
@@ -397,7 +394,6 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             if (eqId != -1) {
                 initServiceData(true);
                 setEquipUsed(eqId, 1);
-                viewDelegate.hideMainRl(false);
             }
         } else finish();
     }
@@ -423,6 +419,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 serverList.add(publishListBean.result.platformPublishDetailList);
                 serverList.add(publishListBean.result.communityPublishDetailList);
                 serverList.add(publishListBean.result.propertyPublishDetailList);
+                serverList.add(publishListBean.result.quipmentPublishDetailList);
                 //是否要清空数据
                 if (deleteAll)
                     refreshData(serverList);
@@ -443,7 +440,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         }
         startDownLoad();
         try {
-            Thread.sleep(3000);
+            Thread.sleep(1500);
             initInfo();
             initNotice();
         } catch (InterruptedException e) {
@@ -483,7 +480,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             List<ContentBean> afterList = new ArrayList<>();
             List<ContentBean> noticeList = new ArrayList<>();
             for (int i = 0; i < allList.size(); i++) {
-                if (allList.get(i).getPublishTypeId() == Constants.PUBLISH_TYPE_INFORMATION)
+                if (allList.get(i).getPublishTypeId() == Constants.PUBLISH_TYPE_INFORMATION || allList.get(i).getPublishTypeId() == Constants.PUBLISH_TYPE_ADVERT)
                     afterList.add(allList.get(i));
                 if (allList.get(i).getPublishTypeId() == Constants.PUBLISH_TYPE_NOTICE) {
                     noticeList.add(allList.get(i));
@@ -629,8 +626,8 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
      */
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEventMessageThread(EventBusData eventBusData) {
-//        ToastUtil.l("收到消息了,收到消息了,收到消息了,收到消息了,收到消息了" +
-//                "收到消息了,收到消息了,收到消息了");
+        ToastUtil.l("收到消息了,收到消息了,收到消息了,收到消息了,收到消息了" +
+                "收到消息了,收到消息了,收到消息了");
         String action = eventBusData.getAction();
         long contentId = eventBusData.getContent_id();
         switch (action) {
@@ -678,6 +675,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                             break;
                         //停播的是资讯
                         case Constants.PUBLISH_TYPE_INFORMATION:
+                        case Constants.PUBLISH_TYPE_ADVERT:
                             DownLoadFileManager.getInstance().setStopId(contentId);
                             stopInformation(contentId);
                             DownLoadFileManager.getInstance().setStopId(-1);
@@ -832,7 +830,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 isNotice(contentBean);
         }
         //为资讯类
-        if (publishType == Constants.PUBLISH_TYPE_INFORMATION) {
+        if (publishType == Constants.PUBLISH_TYPE_INFORMATION || publishType == Constants.PUBLISH_TYPE_ADVERT) {
             if (contentBean.getSpots() == Constants.IS_SPOTS && loadAllValidInformation().size() > 0) {
                 //开始插播资讯
                 startInterCutInfo(contentBean);

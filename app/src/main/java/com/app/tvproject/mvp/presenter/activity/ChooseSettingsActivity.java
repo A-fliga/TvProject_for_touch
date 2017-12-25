@@ -11,6 +11,7 @@ import com.app.tvproject.mvp.model.data.ChooseSettingsBean;
 import com.app.tvproject.mvp.view.ChooseSettingsActivityDelegate;
 import com.app.tvproject.utils.LogUtil;
 import com.app.tvproject.utils.NetUtil;
+import com.app.tvproject.utils.ProgressDialogUtil;
 import com.app.tvproject.utils.SharedPreferencesUtil;
 
 import java.util.ArrayList;
@@ -48,6 +49,7 @@ public class ChooseSettingsActivity extends ActivityPresenter<ChooseSettingsActi
      * @param id
      */
     private void getSettings(int type, long id) {
+        ProgressDialogUtil.instance().startLoad();
         PublicModel.getInstance().getSettingsData(new Subscriber<ChooseSettingsBean>() {
             @Override
             public void onCompleted() {
@@ -57,10 +59,12 @@ public class ChooseSettingsActivity extends ActivityPresenter<ChooseSettingsActi
             @Override
             public void onError(Throwable e) {
                 LogUtil.w("测试", "" + e);
+                ProgressDialogUtil.instance().stopLoad();
             }
 
             @Override
             public void onNext(ChooseSettingsBean chooseSettingsBean) {
+                ProgressDialogUtil.instance().stopLoad();
                 adapter = new ChooseSettingsAdapter(ChooseSettingsActivity.this, chooseSettingsBean.result.list);
                 viewDelegate.initSettingsView(adapter);
                 //设置item点击监听

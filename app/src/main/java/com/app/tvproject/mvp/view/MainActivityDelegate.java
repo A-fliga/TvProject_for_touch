@@ -41,7 +41,6 @@ public class MainActivityDelegate extends ViewDelegate {
 
     public void hideMainRl(Boolean hide) {
         getActivity().runOnUiThread(() -> get(R.id.main_rl).setVisibility(hide ? View.GONE : View.VISIBLE));
-
     }
 
     //初始化日期

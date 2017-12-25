@@ -4,11 +4,11 @@ package com.app.tvproject.mvp.model.data;
  * Created by Administrator on 2017/10/14 0014.
  */
 
-public class BaseEntity<E> {
+public class BaseEntity<T> {
 
     private int code;
     private String msg;
-    private E result;
+    private T result;
 
     public int getCode() {
         return code;
@@ -26,11 +26,11 @@ public class BaseEntity<E> {
         this.msg = msg;
     }
 
-    public E getResult() {
+    public T getResult() {
         return result;
     }
 
-    public void setResult(E result) {
+    public void setResult(T result) {
         this.result = result;
     }
 

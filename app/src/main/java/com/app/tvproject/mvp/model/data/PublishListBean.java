@@ -16,9 +16,9 @@ public class PublishListBean {
         /**
          * 要按优先级顺序播
          */
-        public List<com.app.tvproject.mvp.model.data.ContentBean> platformPublishDetailList; // 平台数组,belongTo 3
-        public List<com.app.tvproject.mvp.model.data.ContentBean> communityPublishDetailList;//村社数组 belongTo 2
-        public List<com.app.tvproject.mvp.model.data.ContentBean> propertyPublishDetailList; // 物业  belongTo 1
-
+        public List<com.app.tvproject.mvp.model.data.ContentBean> platformPublishDetailList; // 平台数组,audiencebelongto 3
+        public List<com.app.tvproject.mvp.model.data.ContentBean> communityPublishDetailList;//村社数组 audiencebelongto 2
+        public List<com.app.tvproject.mvp.model.data.ContentBean> propertyPublishDetailList; // 物业  audiencebelongto 1
+        public List<com.app.tvproject.mvp.model.data.ContentBean> quipmentPublishDetailList ;// 设备 audiencebelongto  0,
     }
 }

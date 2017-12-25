@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.app.tvproject.mvp.model.data.EventBusData;
+import com.app.tvproject.utils.ToastUtil;
 
 import org.greenrobot.eventbus.EventBus;
 import org.json.JSONObject;
@@ -25,7 +26,7 @@ public class JpushCustomerReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-//        ToastUtil.l("触发推送了，触发推送了，触发推送了，触发推送了触发推送了，触发推送了，");
+        ToastUtil.l("触发推送了，触发推送了，触发推送了，触发推送了触发推送了，触发推送了，");
         if (null == nm) {
             nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         }

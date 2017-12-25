@@ -30,6 +30,7 @@ import static com.app.tvproject.myDao.DaoUtil.queryContentById;
 
 /**
  * Created by www on 2017/11/27.
+ * 单任务队列下载，尽量保证在前面要显示的界面优先下载好
  */
 
 public class DownLoadFileManager {
@@ -167,7 +168,7 @@ public class DownLoadFileManager {
                     os.write(fileByte, 0, len);
                     per += len;
                     pd.setProgress(per);
-                    LogUtil.w("download", "apk下载" + per);
+//                    LogUtil.w("download", "apk下载" + per);
                 }
                 is.close();
                 os.close();

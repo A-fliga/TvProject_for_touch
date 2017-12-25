@@ -16,4 +16,6 @@
     <dimen name="text_42">42sp</dimen>
     <!--1484-->
     <dimen name="img_w">1484dp</dimen>
+
+    <dimen name="text_size_16">16sp</dimen>
 </resources>
