@@ -67,12 +67,13 @@ public class ContentBean implements Parcelable {
     private int delstatus;
     private String tagname;
     private int spots;
+    private String bgm;
 
-    @Generated(hash = 425725001)
+    @Generated(hash = 1578307317)
     public ContentBean(long id, int publishTypeId, int publishTagId, String publisher, int duration, String headline, long starttime,
             long endtime, String content, String imageurl, int imgormo, int transformsound, String updateBy, String creatBy,
             long creatTime, long updateTime, String playTime, int playCount, int belongto, int belongtoId, int status, long sort,
-            int audiencebelongto, int audiencebelongtoId, int delstatus, String tagname, int spots) {
+            int audiencebelongto, int audiencebelongtoId, int delstatus, String tagname, int spots, String bgm) {
         this.id = id;
         this.publishTypeId = publishTypeId;
         this.publishTagId = publishTagId;
@@ -100,6 +101,7 @@ public class ContentBean implements Parcelable {
         this.delstatus = delstatus;
         this.tagname = tagname;
         this.spots = spots;
+        this.bgm = bgm;
     }
 
     @Generated(hash = 1643641106)
@@ -357,6 +359,14 @@ public class ContentBean implements Parcelable {
 
     public void setSpots(int spots) {
         this.spots = spots;
+    }
+
+    public String getBgm() {
+        return this.bgm;
+    }
+
+    public void setBgm(String bgm) {
+        this.bgm = bgm;
     }
 
     protected ContentBean(Parcel in) {

@@ -138,6 +138,9 @@ public class DaoUtil {
         if (contentBean != null) {
             if (contentBean.getPublishTypeId() == Constants.PUBLISH_TYPE_INFORMATION || contentBean.getPublishTypeId() == Constants.PUBLISH_TYPE_ADVERT) {
                 DownLoadFileManager.getInstance().addDeleteTask(queryContentById(id).getImageurl());
+                if(contentBean.getTransformsound() != 1 && contentBean.getBgm() != null && !contentBean.getBgm().isEmpty()){
+                    DownLoadFileManager.getInstance().addDeleteTask(queryContentById(id).getBgm());
+                }
             }
             try {
                 //按照内容删除

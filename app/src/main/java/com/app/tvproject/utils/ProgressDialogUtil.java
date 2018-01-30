@@ -162,12 +162,7 @@ public class ProgressDialogUtil {
         }
         final Message message = new Message();
         message.what = START_EMPTY_DIALOG;
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                handler.sendMessage(message);
-            }
-        }, 200);
+        handler.sendMessage(message);
     }
 
     //有文本消息的对话框
@@ -182,13 +177,7 @@ public class ProgressDialogUtil {
         final Message message = new Message();
         message.what = START_DIALOG;
         message.obj = msg;
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                handler.sendMessage(message);
-            }
-        }, 200);
-//        handler.sendMessage(message);
+        handler.sendMessage(message);
     }
 
     /**
@@ -234,13 +223,7 @@ public class ProgressDialogUtil {
      * @返回值:void
      */
     public void stopLoad() {
-//        handler.sendEmptyMessage(STOP_DIALOG);
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                handler.sendEmptyMessage(STOP_DIALOG);
-            }
-        }, 300);
+        handler.sendEmptyMessage(STOP_DIALOG);
     }
 
     public boolean isBackground(Context context) {

@@ -51,6 +51,7 @@ public class ContentBeanDao extends AbstractDao<ContentBean, Long> {
         public final static Property Delstatus = new Property(24, int.class, "delstatus", false, "DELSTATUS");
         public final static Property Tagname = new Property(25, String.class, "tagname", false, "TAGNAME");
         public final static Property Spots = new Property(26, int.class, "spots", false, "SPOTS");
+        public final static Property Bgm = new Property(27, String.class, "bgm", false, "BGM");
     }
 
 
@@ -92,7 +93,8 @@ public class ContentBeanDao extends AbstractDao<ContentBean, Long> {
                 "\"AUDIENCEBELONGTO_ID\" INTEGER NOT NULL ," + // 23: audiencebelongtoId
                 "\"DELSTATUS\" INTEGER NOT NULL ," + // 24: delstatus
                 "\"TAGNAME\" TEXT," + // 25: tagname
-                "\"SPOTS\" INTEGER NOT NULL );"); // 26: spots
+                "\"SPOTS\" INTEGER NOT NULL ," + // 26: spots
+                "\"BGM\" TEXT);"); // 27: bgm
     }
 
     /** Drops the underlying database table. */
@@ -163,6 +165,11 @@ public class ContentBeanDao extends AbstractDao<ContentBean, Long> {
             stmt.bindString(26, tagname);
         }
         stmt.bindLong(27, entity.getSpots());
+ 
+        String bgm = entity.getBgm();
+        if (bgm != null) {
+            stmt.bindString(28, bgm);
+        }
     }
 
     @Override
@@ -227,6 +234,11 @@ public class ContentBeanDao extends AbstractDao<ContentBean, Long> {
             stmt.bindString(26, tagname);
         }
         stmt.bindLong(27, entity.getSpots());
+ 
+        String bgm = entity.getBgm();
+        if (bgm != null) {
+            stmt.bindString(28, bgm);
+        }
     }
 
     @Override
@@ -263,7 +275,8 @@ public class ContentBeanDao extends AbstractDao<ContentBean, Long> {
             cursor.getInt(offset + 23), // audiencebelongtoId
             cursor.getInt(offset + 24), // delstatus
             cursor.isNull(offset + 25) ? null : cursor.getString(offset + 25), // tagname
-            cursor.getInt(offset + 26) // spots
+            cursor.getInt(offset + 26), // spots
+            cursor.isNull(offset + 27) ? null : cursor.getString(offset + 27) // bgm
         );
         return entity;
     }
@@ -297,6 +310,7 @@ public class ContentBeanDao extends AbstractDao<ContentBean, Long> {
         entity.setDelstatus(cursor.getInt(offset + 24));
         entity.setTagname(cursor.isNull(offset + 25) ? null : cursor.getString(offset + 25));
         entity.setSpots(cursor.getInt(offset + 26));
+        entity.setBgm(cursor.isNull(offset + 27) ? null : cursor.getString(offset + 27));
      }
     
     @Override

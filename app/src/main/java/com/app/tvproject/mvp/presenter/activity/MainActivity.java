@@ -3,6 +3,8 @@ package com.app.tvproject.mvp.presenter.activity;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Looper;
 import android.support.v4.app.Fragment;
@@ -84,9 +86,12 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     //百度语音的引擎
     private SpeechSynthesizer mSpeechSynthesizer;
 
+    //音乐播放器
+    private MediaPlayer mediaPlayer;
     private VideoFragment videoFragment;
     private CustomerVideoView videoView;
 
+    private ImgWithTextFragment cutImgFragment;
     private VideoFragment cutVideoFragment;
     //记住正在插播的通知或资讯的Id，处理停播用
     private long interCutNoticeId, interCutInfoId;
@@ -108,7 +113,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         viewDelegate.hideMainRl(true);
         try {
             Runtime.getRuntime().exec("su");
-             initAllData();
+            initAllData();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -330,6 +335,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
 //            LogUtil.w("ceshi", "应该播的坐标：" + nextPosition);
             ContentBean contentBean = noticeList.get(nextPosition);
             if (contentBean != null) {
+                contentBean.setSpots(0);
                 viewDelegate.startMarquee(contentBean);
 //                LogUtil.w("ceshi", "正在播放的ID：" + contentBean.getId() + contentBean.getHeadline());
                 SharedPreferencesUtil.saveNoticeId(contentBean.getId());
@@ -456,7 +462,6 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
      * 如果list<id1>里面有，则在list<资讯1> indexOf出这个id对应的contentBean，比较updateTime,如果2大于1则去下载，else 检查
      * 1中的imgUrl对应的文件是否存在，不存在，走下载，存在，则替换掉2中的imgUrl
      * 如果list<id1>中没有，则根据id查询contentBean，去下载imgUrl
-     * <p>
      * 之后调用init方法 搞定
      */
     private void compareWithServer(List<List<ContentBean>> serverList, Boolean clearShared) {
@@ -520,12 +525,16 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 //编辑过，要把原来的多余数据删了
                 else {
                     DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getImageurl());
+                    if (hasBgm(beforeBean))
+                        DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getBgm());
                 }
             }
             beforeId.removeAll(sameId);
             for (int i = 0; i < beforeId.size(); i++) {
                 ContentBean beforeBean = queryContentById(beforeId.get(i));
                 DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getImageurl());
+                if (hasBgm(beforeBean))
+                    DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getBgm());
             }
             deleteDataAndShared(false, clearShared);
             insertOrReplaceList(afterList);
@@ -626,8 +635,8 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
      */
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onEventMessageThread(EventBusData eventBusData) {
-        ToastUtil.l("收到消息了,收到消息了,收到消息了,收到消息了,收到消息了" +
-                "收到消息了,收到消息了,收到消息了");
+//        ToastUtil.l("收到消息了,收到消息了,收到消息了,收到消息了,收到消息了" +
+//                "收到消息了,收到消息了,收到消息了");
         String action = eventBusData.getAction();
         long contentId = eventBusData.getContent_id();
         switch (action) {
@@ -677,7 +686,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                         case Constants.PUBLISH_TYPE_INFORMATION:
                         case Constants.PUBLISH_TYPE_ADVERT:
                             DownLoadFileManager.getInstance().setStopId(contentId);
-                            stopInformation(contentId);
+                            stopInformation(contentId, contentBean);
                             DownLoadFileManager.getInstance().setStopId(-1);
                             break;
                     }
@@ -687,7 +696,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     }
 
 
-    private void stopInformation(long contentId) {
+    private void stopInformation(long contentId, ContentBean stopBean) {
         LogUtil.w("ceshi", "停播： informationId" + SharedPreferencesUtil.getInformationId() + "   stopId" + contentId);
         //如果停播的资讯正在播放，并且在插播的内容不在播放，要取消原来的跳转任务并且立即切换下一个内容,这里记得一定要先切换再删数据库，要不查询下标会不对
         if (SharedPreferencesUtil.getInformationId() == contentId) {
@@ -698,9 +707,9 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         if (contentId == interCutInfoId) {
             interCutInfoId = -1;
             ContentBean beforeInfoBean = queryContentById(SharedPreferencesUtil.getInformationId());
-            showOrHideContent(queryContentById(contentId).getImgormo(), beforeInfoBean);
+            showOrHideContent(queryContentById(contentId).getImgormo(), beforeInfoBean, stopBean);
             if (cutInfoTime != 0 && loadAllValidInformation().size() != 1) {
-                countDownInformation((beforeInfoBean.getDuration() * 1000 - cutInfoTime + 1500) / 1000);
+                countDownInformation((beforeInfoBean.getDuration() * 1000 - cutInfoTime + 1000) / 1000);
             }
             if (interCutInfoTask != null)
                 interCutInfoTask.cancel();
@@ -840,6 +849,10 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         }
     }
 
+    private Boolean hasBgm(ContentBean contentBean) {
+        return contentBean.getTransformsound() != 1 && contentBean.getBgm() != null && !contentBean.getBgm().isEmpty();
+    }
+
     private void startInterCutInfo(ContentBean contentBean) {
         if (informationTask != null)
             informationTask.cancel();
@@ -854,6 +867,10 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 case Constants.IS_IMAGE:
                     if (mSpeechSynthesizer != null)
                         mSpeechSynthesizer.pause();
+                    if (hasBgm(beforeBean) && mediaPlayer != null) {
+                        LogUtil.d("idceshi", "activity里的id：" + mediaPlayer.toString());
+                        mediaPlayer.pause();
+                    }
                     viewDelegate.setImgFrameVisibility(false);
                     break;
                 //原本播放的是视频
@@ -884,7 +901,11 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 viewDelegate.setCutImgVisibility(true);
                 setLogoAndTitle(true, contentBean.getHeadline());
                 ImgWithTextFragment imgFragment = new ImgWithTextFragment();
+                cutImgFragment = imgFragment;
                 beginInterCutTransaction(true, imgFragment, contentBean);
+                if (hasBgm(contentBean)) {
+                    DownLoadFileManager.getInstance().addDownLoadBgm(contentBean);
+                }
                 break;
             //插播的是视频
             case Constants.IS_MOVIE:
@@ -908,10 +929,9 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         interCutInfoTask = new TimerTask() {
             @Override
             public void run() {
-                showOrHideContent(cutType, beforeBean);
+                showOrHideContent(cutType, beforeBean, contentBean);
                 if (cutInfoTime != 0 && loadAllValidInformation().size() != 1) {
-//                    LogUtil.w("shijian", "回复上次的时间：" + (contentBean.getDuration() * 1000 - cutInfoTime + 1500) / 1000);
-                    countDownInformation((beforeBean.getDuration() * 1000 - cutInfoTime + 1500) / 1000);
+                    countDownInformation((beforeBean.getDuration() * 1000 - cutInfoTime + 1000) / 1000);
                 }
                 viewDelegate.setTagContent(beforeBean.getTagname());
                 //插播结束后置成-1
@@ -930,12 +950,20 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         }
     }
 
-    private void showOrHideContent(int cutType, ContentBean beforeBean) {
+    private void showOrHideContent(int cutType, ContentBean beforeBean, ContentBean cutBean) {
         //插播的是图片，完后要把插播的视图隐藏
         if (cutType == Constants.IS_IMAGE) {
             viewDelegate.setCutImgVisibility(false);
             if (mSpeechSynthesizer != null)
                 mSpeechSynthesizer.stop();
+            if (hasBgm(cutBean)) {
+                MediaPlayer mediaPlayer = cutImgFragment.getMediaPlayer();
+                if (mediaPlayer != null) {
+                    mediaPlayer.stop();
+                    mediaPlayer.release();
+                }
+            }
+
         }
         //插播的是视频，完后要把插播的视图隐藏
         if (cutType == Constants.IS_MOVIE) {
@@ -945,7 +973,6 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                     //一定要恢复标志位
                     cutVideoFragment.setIsSpots(false);
                 }
-//                LogUtil.w("idceshi", "插播完后的viewId" + cutVideo.toString());
                 if (cutVideo != null) {
                     cutVideo.pause();
                     cutVideo.stopPlayback();
@@ -956,10 +983,19 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         if (beforeBean != null && beforeBean.getImgormo() == Constants.IS_IMAGE) {
             setLogoAndTitle(true, beforeBean.getHeadline());
             viewDelegate.setImgFrameVisibility(true);
-            if (mSpeechSynthesizer != null)
+            if (mSpeechSynthesizer != null) {
                 if (beforeBean.getTransformsound() == 1) {
-                    mSpeechSynthesizer.speak(beforeBean.getContent());
+                    String text = beforeBean.getContent().replaceAll(" ", "").replaceAll("\r|\n", "");
+                    String[] data = text.split("\\*");
+                    for (String aData : data) {
+                        mSpeechSynthesizer.speak(aData);
+                    }
                 }
+            }
+            if (hasBgm(beforeBean) && mediaPlayer != null) {
+                mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+                mediaPlayer.start();
+            }
         }
         if (beforeBean != null && beforeBean.getImgormo() == Constants.IS_MOVIE) {
             setLogoAndTitle(false, beforeBean.getHeadline());
@@ -1028,10 +1064,15 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
 
     //为资讯类的操作
     private void isInformation(ContentBean contentBean) {
+        LogUtil.d("load", loadAllValidInformation().size() + "");
         insertOrReplaceContent(contentBean);
         LogUtil.w("ceshi", "这个新数据插在了队伍的" + loadAllValidInformation().indexOf(contentBean) + "处");
         LogUtil.w("ceshi", loadAllValidInformation().size() + "  " + SharedPreferencesUtil.getInformationId());
         //如果本来没有存过资讯 或者 收到的资讯ID和正在播放的ID相同（替换操作），则马上更新界面
+        LogUtil.d("load", loadAllValidInformation().size() + "");
+        for (int i = 0; i < loadAllValidInformation().size(); i++) {
+            LogUtil.d("load" + loadAllValidInformation().get(i).toString());
+        }
         if (SharedPreferencesUtil.getInformationId() == contentBean.getId()) {
             if (informationTask != null) {
                 informationTask.cancel();
@@ -1047,6 +1088,10 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         String[] imgUrl = contentBean.getImageurl().replaceAll(" ", "").split(",");
         for (int i = 0; i < imgUrl.length; i++) {
             DownLoadFileManager.getInstance().addDownloadTask(i, contentBean);
+        }
+        //下载背景音乐
+        if (hasBgm(contentBean)) {
+            DownLoadFileManager.getInstance().addDownLoadBgm(contentBean);
         }
     }
 
@@ -1144,6 +1189,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
 
     private void showInformation(ContentBean contentBean) {
         if (contentBean != null) {
+            contentBean.setSpots(0);
             viewDelegate.setTagContent(contentBean.getTagname());
             switch (contentBean.getImgormo()) {
                 //是纯图或者图文内容
@@ -1206,6 +1252,14 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         if (getSpeechSynthesizer() != null) {
             mSpeechSynthesizer.stop();
         }
+        try {
+            if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+                mediaPlayer.stop();
+                mediaPlayer.release();
+            }
+        } catch (IllegalStateException e) {
+
+        }
     }
 
 
@@ -1223,11 +1277,15 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         if (duration < 0)
             timer.schedule(informationTask, 15000);
         cutInfoTime = System.currentTimeMillis();
-//        LogUtil.w("shijian", "启动线程的时间:" + cutInfoTime);
     }
 
     public SpeechSynthesizer getSpeechSynthesizer() {
         return mSpeechSynthesizer == null ? null : mSpeechSynthesizer;
+    }
+
+    public MediaPlayer getMediaPlayer() {
+        mediaPlayer = new MediaPlayer();
+        return mediaPlayer;
     }
 
     @Override
@@ -1242,6 +1300,14 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         if (eqId != -1)
             updateServiceStatus(eqId, 0);
 
+        try {
+            if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+                mediaPlayer.stop();
+                mediaPlayer.release();
+            }
+        } catch (IllegalStateException e) {
+
+        }
         //退出app停止下载
         DownLoadFileManager.getInstance().stopDownLoad(true);
         //退出应用后解绑eventBus

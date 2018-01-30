@@ -37,7 +37,7 @@ public class DownLoadFileManager {
     private Boolean stopDownLoad = false;
     private long stopId = 0;
     private String downloadDir; // 文件保存路径
-    private static DownLoadFileManager instance; // 单例
+    private static volatile DownLoadFileManager instance; // 单例
 
     // 单线程任务队列
     private static Executor executor;
@@ -100,12 +100,16 @@ public class DownLoadFileManager {
 
     /**
      * 获取单例对象
-     *
+     * 双重校验锁
      * @return
      */
     public static DownLoadFileManager getInstance() {
         if (instance == null) {
-            instance = new DownLoadFileManager();
+            synchronized (DownLoadFileManager.class) {
+                if (instance == null) {
+                    instance = new DownLoadFileManager();
+                }
+            }
         }
         return instance;
     }
@@ -116,6 +120,12 @@ public class DownLoadFileManager {
     public void addDownloadTask(int httpIndex, ContentBean contentBean) {
         if (NetUtil.isConnectNoToast()) {
             executor.execute(() -> download(httpIndex, contentBean));
+        }
+    }
+
+    public void addDownLoadBgm(ContentBean contentBean) {
+        if (NetUtil.isConnectNoToast()) {
+            executor.execute(() -> downLoadBgm(contentBean, contentBean.getBgm()));
         }
     }
 
@@ -146,7 +156,7 @@ public class DownLoadFileManager {
             deleteFilesByDirectory(apkDirPath);
             File apkDir = new File(apkDirPath);
             if (!apkDir.exists()) {
-                LogUtil.d("xiazai",apkDir.mkdirs()+"");
+                LogUtil.d("xiazai", apkDir.mkdirs() + "");
             }
             try {
                 URL url = new URL(appUtl);
@@ -185,9 +195,86 @@ public class DownLoadFileManager {
     }
 
     /**
+     * 下载背景音乐
+     *
+     * @param contentBean
+     * @param bgmUrl
+     */
+    private void downLoadBgm(ContentBean contentBean, String bgmUrl) {
+        if (bgmUrl.substring(0, 4).equals("http") && queryContentById(contentBean.getId()) != null) {
+            File bgm = new File(bgmUrl);
+            String downFileName = bgm.getName();
+            String fileSuffix = downFileName.substring(downFileName.lastIndexOf("."), downFileName.length());
+            File fileDir = new File(downloadDir);
+            if (!fileDir.exists()) {
+                fileDir.mkdirs();
+            }
+            //加进下载数组
+            String fileName = downloadDir + File.separator + System.currentTimeMillis() + fileSuffix;
+            try {
+                URL url = new URL(bgmUrl);
+                LogUtil.w("download", contentBean.getHeadline() + "正在下载背景音乐");
+                // todo change the file location/name according to your needs
+                File futureStudioIconFile = new File(fileName);
+                if (!futureStudioIconFile.exists()) {
+                    futureStudioIconFile.createNewFile();
+                }
+                InputStream is = url.openStream();
+                OutputStream os = new FileOutputStream(futureStudioIconFile);
+                long fileSizeDownloaded = 0;
+                try {
+                    byte[] fileReader = new byte[4096];
+                    int len;
+                    while ((len = is.read(fileReader)) != -1) {
+                        //如果收到全局暂停 或者 该消息停播了，要关流
+                        if (stopDownLoad || contentBean.getId() == stopId) {
+                            is.close();
+                            os.close();
+                            stopId = -1;
+                        } else {
+                            os.write(fileReader, 0, len);
+                            fileSizeDownloaded += len;
+                            LogUtil.w("www", "下载进度" + fileSizeDownloaded + "of" + url.getFile().length());
+                        }
+                    }
+                    is.close();
+                    os.close();
+                    //下载完要替换url
+                    //查询保存过数据的contentBean
+                    contentBean.setBgm(fileName);
+                    //要检查一下下载过程中有没被停播,停播了要删掉文件
+                    if (queryContentById(contentBean.getId()) != null) {
+                        insertOrReplaceContent(contentBean);
+                        LogUtil.w("download", "插入BGM" + queryContentById(contentBean.getId()).getHeadline());
+                    } else {
+                        File file = new File(fileName);
+                        if (file.exists())
+                            file.delete();
+                    }
+                    LogUtil.w("download", "下载完成BGM");
+                } catch (IOException e) {
+                } finally {
+                    if (os != null) {
+                        os.close();
+
+                    }
+                    if (is != null) {
+                        is.close();
+
+                    }
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+    /**
      * 下载文件
      */
-
     private void download(int downloadPosition, ContentBean contentBean) {
         String[] downLoadUrl = contentBean.getImageurl().replaceAll(" ", "").split(",");
         for (int i = 0; i < downLoadUrl.length; i++) {
@@ -204,7 +291,7 @@ public class DownLoadFileManager {
                     String fileSuffix = downFileName.substring(downFileName.lastIndexOf("."), downFileName.length());
                     File fileDir = new File(downloadDir);
                     if (!fileDir.exists()) {
-                       fileDir.mkdirs();
+                        fileDir.mkdirs();
                     }
                     //加进下载数组
                     String fileName = downloadDir + File.separator + System.currentTimeMillis() + fileSuffix;

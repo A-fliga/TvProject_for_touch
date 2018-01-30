@@ -8,7 +8,7 @@ import com.app.tvproject.mvp.presenter.activity.MainActivity;
 import com.app.tvproject.utils.ToastUtil;
 
 /**
- * Created by lenovo on 2017/12/21.
+ * Created by www on 2017/12/21.
  */
 
 public class UpdateApkReceiver extends BroadcastReceiver {
