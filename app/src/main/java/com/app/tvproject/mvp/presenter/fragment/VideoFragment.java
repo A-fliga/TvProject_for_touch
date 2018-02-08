@@ -64,8 +64,8 @@ public class VideoFragment extends FragmentPresenter<VideoFragmentDelegate> {
         cut_videoView = viewDelegate.get(R.id.videoView_interCut);
         if (contentBean != null) {
             if (isSpots)
-                initVideoView(true, cut_videoView, contentBean.getImageurl());
-            else initVideoView(false, videoView, contentBean.getImageurl());
+                initVideoView(true, cut_videoView, contentBean.getResourcesUrl());
+            else initVideoView(false, videoView, contentBean.getResourcesUrl());
         }
     }
 

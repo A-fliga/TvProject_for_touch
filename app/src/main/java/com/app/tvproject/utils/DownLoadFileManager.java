@@ -16,7 +16,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayDeque;
-import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -214,7 +213,7 @@ public class DownLoadFileManager {
             try {
                 URL url = new URL(bgmUrl);
                 LogUtil.w("download", contentBean.getHeadline() + "正在下载背景音乐");
-                // todo change the file location/name according to your needs
+                // todo change the file location/names according to your needs
                 File futureStudioIconFile = new File(fileName);
                 if (!futureStudioIconFile.exists()) {
                     futureStudioIconFile.createNewFile();
@@ -276,13 +275,13 @@ public class DownLoadFileManager {
      * 下载文件
      */
     private void download(int downloadPosition, ContentBean contentBean) {
-        String[] downLoadUrl = contentBean.getImageurl().replaceAll(" ", "").split(",");
+        String[] downLoadUrl = contentBean.getResourcesUrl().replaceAll(" ", "").split(",");
         for (int i = 0; i < downLoadUrl.length; i++) {
             //是对应位置，且以http开头，且数据库的数据还在，才去提交下载
             if (i == downloadPosition && !downLoadUrl[downloadPosition].isEmpty() && downLoadUrl[downloadPosition].substring(0, 4).equals("http")
                     && queryContentById(contentBean.getId()) != null) {
                 LogUtil.w("download", "提交下载" + contentBean.getHeadline() + "的第" + downloadPosition + "条连接");
-                LogUtil.w("download", "看看数据" + contentBean.getImageurl());
+                LogUtil.w("download", "看看数据" + contentBean.getResourcesUrl());
                 String path = downLoadUrl[i];
                 if (path != null && !path.isEmpty()) {
                     //判断文件类型
@@ -299,7 +298,7 @@ public class DownLoadFileManager {
                     try {
                         URL url = new URL(path);
                         LogUtil.w("download", "正在下载" + contentBean.getHeadline() + "的第" + downloadPosition + "条连接");
-                        // todo change the file location/name according to your needs
+                        // todo change the file location/names according to your needs
                         File futureStudioIconFile = new File(fileName);
                         if (!futureStudioIconFile.exists()) {
                             futureStudioIconFile.createNewFile();
@@ -329,7 +328,7 @@ public class DownLoadFileManager {
                             StringBuffer buffer = new StringBuffer();
                             ContentBean mContentBean = queryContentById(contentBean.getId());
                             //只替换对应位置的imgUrl，要不会出现重复下载的问题
-                            String[] mPath = mContentBean.getImageurl().replaceAll(" ", "").split(",");
+                            String[] mPath = mContentBean.getResourcesUrl().replaceAll(" ", "").split(",");
                             for (int j = 0; j < mPath.length; j++) {
                                 if (j == downloadPosition) {
                                     mPath[j] = fileName;
@@ -340,11 +339,11 @@ public class DownLoadFileManager {
                                 }
                             }
                             LogUtil.w("download", "替换完成第" + downloadPosition + "条连接 " + buffer.toString());
-                            mContentBean.setImageurl(buffer.toString());
+                            mContentBean.setResourcesUrl(buffer.toString());
                             //要检查一下下载过程中有没被停播,停播了要删掉文件
                             if (queryContentById(mContentBean.getId()) != null) {
                                 insertOrReplaceContent(mContentBean);
-                                LogUtil.w("download", "插入第" + downloadPosition + "条连接 " + queryContentById(contentBean.getId()).getImageurl());
+                                LogUtil.w("download", "插入第" + downloadPosition + "条连接 " + queryContentById(contentBean.getId()).getResourcesUrl());
                             } else {
                                 File file = new File(fileName);
                                 if (file.exists())

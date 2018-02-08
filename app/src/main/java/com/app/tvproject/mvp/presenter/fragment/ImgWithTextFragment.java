@@ -4,7 +4,6 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import com.app.tvproject.constants.Constants;
 import com.app.tvproject.mvp.model.data.ContentBean;
@@ -96,7 +95,7 @@ public class ImgWithTextFragment extends FragmentPresenter<ImgWithTextDelegate> 
 
     private void setBannerImgLoader(ContentBean contentBean) {
         List<String> imgUrlList = new ArrayList<>();
-        String[] imgUrl = contentBean.getImageurl().replaceAll(" ", "").split(",");
+        String[] imgUrl = contentBean.getResourcesUrl().replaceAll(" ", "").split(",");
         for (String anImgUrl : imgUrl) {
             if (!NetUtil.isConnectNoToast()) {
                 if (!(anImgUrl.replaceAll(" ", "").substring(0, 4).equals("http")) && !anImgUrl.isEmpty()) {

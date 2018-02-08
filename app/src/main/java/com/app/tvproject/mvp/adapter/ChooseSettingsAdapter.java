@@ -10,6 +10,7 @@ import android.widget.TextView;
 import com.app.tvproject.R;
 import com.app.tvproject.mvp.model.data.ChooseSettingsBean;
 import com.app.tvproject.utils.AppUtil;
+import com.app.tvproject.utils.ToastUtil;
 
 import java.util.List;
 
@@ -20,12 +21,14 @@ import java.util.List;
 
 public class ChooseSettingsAdapter extends RecyclerView.Adapter<ChooseSettingsAdapter.ChooseSettingViewHolder> {
     private Context context;
-    private List<ChooseSettingsBean.ResultBean.ListBean> beanList;
+    private List<ChooseSettingsBean.ResultBean> beanList;
     private OnItemClickListener listener;
 
-    public ChooseSettingsAdapter(Context context, List<ChooseSettingsBean.ResultBean.ListBean> beanList) {
+    public ChooseSettingsAdapter(Context context, List<ChooseSettingsBean.ResultBean> beanList) {
         this.context = context;
         this.beanList = beanList;
+        if (beanList.size() == 0)
+            ToastUtil.s("暂无数据");
     }
 
     @Override
@@ -35,14 +38,14 @@ public class ChooseSettingsAdapter extends RecyclerView.Adapter<ChooseSettingsAd
 
     @Override
     public void onBindViewHolder(ChooseSettingViewHolder holder, int position) {
-        ChooseSettingsBean.ResultBean.ListBean settingBean = beanList.get(position);
-        holder.chooseItemTv.setText((settingBean.name == null || settingBean.name.isEmpty()) ?
-                settingBean.equipmentNumber : settingBean.name);
+        ChooseSettingsBean.ResultBean settingBean = beanList.get(position);
+        holder.chooseItemTv.setText((settingBean.names == null || settingBean.names.isEmpty()) ?
+                settingBean.equipmentnumber : settingBean.names);
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (settingBean.equipmentNumber != null) {
-                    if (!AppUtil.isFastDoubleClick(3000)){
+                if (settingBean.equipmentnumber != null) {
+                    if (!AppUtil.isFastDoubleClick(3000)) {
                         listener.onItemClick(settingBean);
                     }
                 } else
@@ -57,7 +60,7 @@ public class ChooseSettingsAdapter extends RecyclerView.Adapter<ChooseSettingsAd
     }
 
     public interface OnItemClickListener {
-        void onItemClick(ChooseSettingsBean.ResultBean.ListBean resultBean);
+        void onItemClick(ChooseSettingsBean.ResultBean resultBean);
     }
 
     public void setOnItemClickListener(OnItemClickListener listener) {

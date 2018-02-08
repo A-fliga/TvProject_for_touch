@@ -75,7 +75,7 @@ public final class HttpClient {
         if (sHttpClient == null) {
             synchronized (HttpClient.class) {
                 if (sHttpClient == null) {
-                    sHttpClient = new HttpClient(BuildConfig.HOST+"phone/app/touchScreen/");
+                    sHttpClient = new HttpClient(BuildConfig.HOST+"/wzt/appTs/");
                 }
             }
         }

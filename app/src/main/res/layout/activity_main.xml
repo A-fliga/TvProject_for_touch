@@ -1,35 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/main_rl"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_rl"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@mipmap/background"
     android:orientation="vertical"
     tools:context="com.app.tvproject.mvp.presenter.activity.MainActivity">
     <!--logo栏-->
+    <Button
+        android:id="@+id/clear_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="清除" />
+
     <RelativeLayout
         android:id="@+id/top_rl"
-        android:layout_toLeftOf="@+id/right_rl"
         android:layout_width="match_parent"
         android:layout_height="120dp"
-        android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true">
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_toLeftOf="@+id/right_rl">
 
         <ImageView
             android:id="@+id/img_logo"
-            android:layout_marginLeft="3dp"
             android:layout_width="@dimen/margin_img_w"
             android:layout_height="@dimen/margin_img_h"
-            android:src="@mipmap/logo_icon"
-            android:layout_centerHorizontal="true"
             android:layout_alignParentLeft="true"
-           />
+            android:layout_centerHorizontal="true"
+            android:layout_marginLeft="3dp"
+            android:src="@mipmap/logo_icon" />
 
         <TextView
-            android:visibility="gone"
             android:id="@+id/tv_logo_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -38,25 +42,28 @@
             android:layout_marginLeft="20dp"
             android:text="政好平台."
             android:textColor="@color/color_black"
-            android:textSize="23sp" />
+            android:textSize="23sp"
+            android:visibility="gone" />
 
         <TextView
-            android:layout_marginLeft="22dp"
-            android:layout_alignLeft="@+id/img_logo"
-            android:layout_below="@+id/img_logo"
             android:id="@+id/tv_tag"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/img_logo"
+            android:layout_below="@+id/img_logo"
             android:layout_centerVertical="true"
+            android:layout_marginLeft="22dp"
             android:layout_toRightOf="@+id/tv_logo_title"
             android:textColor="@color/color_background"
             android:textSize="25sp" />
+
         <Button
-            android:visibility="gone"
             android:id="@+id/clear"
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:text="清空"/>
+            android:text="清空"
+            android:visibility="gone" />
+
         <TextView
             android:id="@+id/tv_title"
             android:layout_width="wrap_content"
@@ -67,56 +74,55 @@
     </RelativeLayout>
     <!-- 图片类的frameLayout-->
     <FrameLayout
-        android:layout_marginBottom="3dp"
-        android:visibility="gone"
         android:id="@+id/img_frameLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/bottom_rl"
         android:layout_below="@+id/top_rl"
+        android:layout_marginBottom="3dp"
         android:layout_toLeftOf="@+id/right_rl"
         android:gravity="center"
-        android:orientation="vertical" />
+        android:orientation="vertical"
+        android:visibility="gone" />
 
     <!-- 图片类的frameLayout,插播用-->
     <FrameLayout
-        android:layout_marginBottom="3dp"
-        android:visibility="gone"
         android:id="@+id/img_interCut_frameLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/bottom_rl"
         android:layout_below="@+id/top_rl"
+        android:layout_marginBottom="3dp"
         android:layout_toLeftOf="@+id/right_rl"
         android:gravity="center"
-        android:orientation="vertical" />
+        android:orientation="vertical"
+        android:visibility="gone" />
 
     <!-- 视频类的frameLayout，插播用,全屏-->
     <!--<FrameLayout-->
-        <!--android:visibility="gone"-->
-        <!--android:layout_marginBottom="3dp"-->
-        <!--android:layout_marginRight="1dp"-->
-        <!--android:layout_alignParentLeft="true"-->
-        <!--android:id="@+id/video_interCut_FrameLayout"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="match_parent"-->
-        <!--android:layout_above="@+id/bottom_rl"-->
-        <!--android:layout_toLeftOf="@+id/right_rl"-->
-        <!--/>-->
+    <!--android:visibility="gone"-->
+    <!--android:layout_marginBottom="3dp"-->
+    <!--android:layout_marginRight="1dp"-->
+    <!--android:layout_alignParentLeft="true"-->
+    <!--android:id="@+id/video_interCut_FrameLayout"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:layout_above="@+id/bottom_rl"-->
+    <!--android:layout_toLeftOf="@+id/right_rl"-->
+    <!--/>-->
 
     <!-- 视频类的frameLayout，全屏-->
     <FrameLayout
-        android:visibility="gone"
-        android:layout_centerInParent="true"
-        android:layout_marginBottom="3dp"
-        android:layout_marginRight="1dp"
-        android:layout_alignParentLeft="true"
         android:id="@+id/videoFrameLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/bottom_rl"
+        android:layout_alignParentLeft="true"
+        android:layout_centerInParent="true"
+        android:layout_marginBottom="3dp"
+        android:layout_marginRight="1dp"
         android:layout_toLeftOf="@+id/right_rl"
-     />
+        android:visibility="gone" />
 
 
     <!--底部布局-->
@@ -148,15 +154,16 @@
             android:text="@string/tv_notice_title"
             android:textColor="@color/color_white"
             android:textSize="@dimen/tv_tag" />
-9
+        9
+
         <HorizontalScrollView
-            android:layout_toRightOf="@+id/tv_notice"
             android:id="@+id/marquee_tv"
             android:layout_width="match_parent"
             android:layout_height="@dimen/lin_bottom"
             android:layout_alignParentEnd="true"
             android:layout_alignParentRight="true"
             android:layout_alignParentTop="true"
+            android:layout_toRightOf="@+id/tv_notice"
             android:background="@color/color_black_gray"
             android:scrollbars="none">
 
@@ -178,20 +185,20 @@
         android:id="@+id/right_rl"
         android:layout_width="190dp"
         android:layout_height="match_parent"
-        android:background="@color/color_background"
-        android:gravity="center_horizontal"
-        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true">
+        android:layout_alignParentTop="true"
+        android:background="@color/color_background"
+        android:gravity="center_horizontal">
 
         <TextView
-            android:layout_marginTop="15dp"
-            android:textSize="@dimen/text_42"
-            android:layout_centerHorizontal="true"
             android:id="@+id/right_time_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/color_white" />
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="15dp"
+            android:textColor="@color/color_white"
+            android:textSize="@dimen/text_42" />
         <!--<ImageView-->
         <!--android:id="@+id/ima_logo"-->
         <!--android:layout_width="200dp"-->
@@ -204,54 +211,56 @@
             android:id="@+id/right_main_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:ems="1"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
             android:layout_marginBottom="10dp"
+            android:ems="1"
             android:lineSpacingExtra="5dp"
             android:paddingLeft="8dp"
             android:text="@string/tv_right_content"
             android:textColor="@color/color_white"
             android:textSize="65sp"
-            android:textStyle="bold"
-            android:layout_centerVertical="true"
-            android:layout_centerHorizontal="true" />
+            android:textStyle="bold" />
 
         <RelativeLayout
-            android:layout_below="@+id/right_main_tv"
             android:id="@+id/right_bottom_rl"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true">
+            android:layout_alignParentBottom="true"
+            android:layout_below="@+id/right_main_tv">
 
             <TextView
-                android:textSize="@dimen/text_21"
                 android:id="@+id/right_data_tv"
-                android:layout_above="@+id/right_calendar_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_above="@+id/right_calendar_tv"
                 android:layout_centerHorizontal="true"
-                android:gravity="center_horizontal"
                 android:layout_marginBottom="5dp"
-                android:textColor="@color/color_white" />
+                android:gravity="center_horizontal"
+                android:textColor="@color/color_white"
+                android:textSize="@dimen/text_21" />
+
             <TextView
-                android:textSize="@dimen/text_21"
-                android:layout_above="@+id/right_air_tv"
                 android:id="@+id/right_calendar_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_above="@+id/right_air_tv"
                 android:layout_centerHorizontal="true"
-                android:gravity="center_horizontal"
                 android:layout_marginBottom="5dp"
-                android:textColor="@color/color_white" />
+                android:gravity="center_horizontal"
+                android:textColor="@color/color_white"
+                android:textSize="@dimen/text_21" />
+
             <TextView
-                android:textSize="@dimen/text_21"
                 android:id="@+id/right_air_tv"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingBottom="15dp"
                 android:layout_alignParentBottom="true"
                 android:layout_centerHorizontal="true"
                 android:gravity="center_horizontal"
-                android:textColor="@color/color_white" />
+                android:paddingBottom="15dp"
+                android:textColor="@color/color_white"
+                android:textSize="@dimen/text_21" />
         </RelativeLayout>
     </RelativeLayout>
 </RelativeLayout>

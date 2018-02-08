@@ -22,7 +22,7 @@ public class ContentBean implements Parcelable {
      * starttime : 1507651200000
      * endtime : 1510761600000
      * content : 引力波的发现再次证明爱因斯坦理论的正确性
-     * imageurl : resource/comm/image/2017/10/16/1508120899016524.jpg
+     * resourcesUrl : resource/comm/image/2017/10/16/1508120899016524.jpg
      * imgormo : null
      * transformsound : 1
      * updateBy : null
@@ -49,7 +49,7 @@ public class ContentBean implements Parcelable {
     private long starttime;
     private long endtime;
     private String content;
-    private String imageurl;
+    private String resourcesUrl;
     private int imgormo;
     private int transformsound;
     private String updateBy;
@@ -68,45 +68,6 @@ public class ContentBean implements Parcelable {
     private String tagname;
     private int spots;
     private String bgm;
-
-    @Generated(hash = 1578307317)
-    public ContentBean(long id, int publishTypeId, int publishTagId, String publisher, int duration, String headline, long starttime,
-            long endtime, String content, String imageurl, int imgormo, int transformsound, String updateBy, String creatBy,
-            long creatTime, long updateTime, String playTime, int playCount, int belongto, int belongtoId, int status, long sort,
-            int audiencebelongto, int audiencebelongtoId, int delstatus, String tagname, int spots, String bgm) {
-        this.id = id;
-        this.publishTypeId = publishTypeId;
-        this.publishTagId = publishTagId;
-        this.publisher = publisher;
-        this.duration = duration;
-        this.headline = headline;
-        this.starttime = starttime;
-        this.endtime = endtime;
-        this.content = content;
-        this.imageurl = imageurl;
-        this.imgormo = imgormo;
-        this.transformsound = transformsound;
-        this.updateBy = updateBy;
-        this.creatBy = creatBy;
-        this.creatTime = creatTime;
-        this.updateTime = updateTime;
-        this.playTime = playTime;
-        this.playCount = playCount;
-        this.belongto = belongto;
-        this.belongtoId = belongtoId;
-        this.status = status;
-        this.sort = sort;
-        this.audiencebelongto = audiencebelongto;
-        this.audiencebelongtoId = audiencebelongtoId;
-        this.delstatus = delstatus;
-        this.tagname = tagname;
-        this.spots = spots;
-        this.bgm = bgm;
-    }
-
-    @Generated(hash = 1643641106)
-    public ContentBean() {
-    }
 
     public long getId() {
         return this.id;
@@ -180,12 +141,12 @@ public class ContentBean implements Parcelable {
         this.content = content;
     }
 
-    public String getImageurl() {
-        return this.imageurl;
+    public String getResourcesUrl() {
+        return this.resourcesUrl;
     }
 
-    public void setImageurl(String imageurl) {
-        this.imageurl = imageurl;
+    public void setResourcesUrl(String resourcesUrl) {
+        this.resourcesUrl = resourcesUrl;
     }
 
     public int getImgormo() {
@@ -333,7 +294,7 @@ public class ContentBean implements Parcelable {
         dest.writeLong(this.starttime);
         dest.writeLong(this.endtime);
         dest.writeString(this.content);
-        dest.writeString(this.imageurl);
+        dest.writeString(this.resourcesUrl);
         dest.writeInt(this.imgormo);
         dest.writeInt(this.transformsound);
         dest.writeString(this.updateBy);
@@ -379,7 +340,7 @@ public class ContentBean implements Parcelable {
         this.starttime = in.readLong();
         this.endtime = in.readLong();
         this.content = in.readString();
-        this.imageurl = in.readString();
+        this.resourcesUrl = in.readString();
         this.imgormo = in.readInt();
         this.transformsound = in.readInt();
         this.updateBy = in.readString();
@@ -397,6 +358,45 @@ public class ContentBean implements Parcelable {
         this.delstatus = in.readInt();
         this.tagname = in.readString();
         this.spots = in.readInt();
+    }
+
+    @Generated(hash = 155843042)
+    public ContentBean(long id, int publishTypeId, int publishTagId, String publisher, int duration, String headline, long starttime,
+            long endtime, String content, String resourcesUrl, int imgormo, int transformsound, String updateBy, String creatBy, long creatTime,
+            long updateTime, String playTime, int playCount, int belongto, int belongtoId, int status, long sort, int audiencebelongto,
+            int audiencebelongtoId, int delstatus, String tagname, int spots, String bgm) {
+        this.id = id;
+        this.publishTypeId = publishTypeId;
+        this.publishTagId = publishTagId;
+        this.publisher = publisher;
+        this.duration = duration;
+        this.headline = headline;
+        this.starttime = starttime;
+        this.endtime = endtime;
+        this.content = content;
+        this.resourcesUrl = resourcesUrl;
+        this.imgormo = imgormo;
+        this.transformsound = transformsound;
+        this.updateBy = updateBy;
+        this.creatBy = creatBy;
+        this.creatTime = creatTime;
+        this.updateTime = updateTime;
+        this.playTime = playTime;
+        this.playCount = playCount;
+        this.belongto = belongto;
+        this.belongtoId = belongtoId;
+        this.status = status;
+        this.sort = sort;
+        this.audiencebelongto = audiencebelongto;
+        this.audiencebelongtoId = audiencebelongtoId;
+        this.delstatus = delstatus;
+        this.tagname = tagname;
+        this.spots = spots;
+        this.bgm = bgm;
+    }
+
+    @Generated(hash = 1643641106)
+    public ContentBean() {
     }
 
     public static final Creator<ContentBean> CREATOR = new Creator<ContentBean>() {

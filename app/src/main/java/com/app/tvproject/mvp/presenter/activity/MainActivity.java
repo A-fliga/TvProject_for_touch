@@ -59,6 +59,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import retrofit2.http.Body;
 import rx.Subscriber;
 
 import static com.app.tvproject.myDao.DaoUtil.deleteAll;
@@ -99,6 +100,8 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     //记录插播时之前的页面播放了多久用的
     private long cutNoticeTime = 0, cutInfoTime = 0;
 
+    private Boolean isCutting = false;
+    private ContentBean cutBean2 = null;//二次插播的数据
 
     @Override
     public Class<MainActivityDelegate> getDelegateClass() {
@@ -111,12 +114,12 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         DownLoadFileManager.getInstance().stopDownLoad(false);
         viewDelegate.hideMainRl(true);
-        try {
-            Runtime.getRuntime().exec("su");
-            initAllData();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            Runtime.getRuntime().exec("su");
+        initAllData();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     private void checkUpdate(Boolean deleteAll) {
@@ -136,6 +139,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 public void onNext(BaseEntity<UpdateBean> updateBeanBaseEntity) {
                     if (updateBeanBaseEntity.getResult() != null && Float.parseFloat(AppUtil.getVersionName()) < Float.parseFloat(updateBeanBaseEntity.getResult().versionsnum)) {
                         //开始下载更新并安装
+                        LogUtil.d("qidong", "更新");
                         new Thread(() -> {
                             Looper.prepare();
                             startUpdate(updateBeanBaseEntity.getResult().appurl, deleteAll);
@@ -228,6 +232,14 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
 
 
     private void initServiceData(Boolean deleteAll) {
+        Button btn = (Button) findViewById(R.id.clear_btn);
+        btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                deleteAll();
+            }
+        });
+
         //初始化百度语音
         initBaiDuVoice();
         viewDelegate.hideMainRl(true);
@@ -279,7 +291,9 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         List<ContentBean> informationList = loadAllValidInformation();
         if (informationList.size() != 0) {
             nextInformation(true);
-        } else setInfoNull(-1);
+        } else {
+            setInfoNull(-1);
+        }
     }
 
     private Boolean noSettings() {
@@ -421,11 +435,8 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             @Override
             public void onNext(PublishListBean publishListBean) {
                 DownLoadFileManager.getInstance().stopDownLoad(false);
-                List<List<ContentBean>> serverList = new ArrayList<>();
-                serverList.add(publishListBean.result.platformPublishDetailList);
-                serverList.add(publishListBean.result.communityPublishDetailList);
-                serverList.add(publishListBean.result.propertyPublishDetailList);
-                serverList.add(publishListBean.result.quipmentPublishDetailList);
+                List<ContentBean> serverList = new ArrayList<>();
+                serverList.addAll(publishListBean.result);
                 //是否要清空数据
                 if (deleteAll)
                     refreshData(serverList);
@@ -437,21 +448,16 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     }
 
 
-    private void refreshData(List<List<ContentBean>> serverList) {
+    private void refreshData(List<ContentBean> serverList) {
         deleteDataAndShared(true, true);
-        for (int i = 0; i < serverList.size(); i++) {
-            if (serverList.get(i).size() != 0) {
-                insertOrReplaceList(serverList.get(i));
-            }
-        }
+//        for (int i = 0; i < serverList.size(); i++) {
+//            if (serverList.get(i).size() != 0) {
+        insertOrReplaceList(serverList);
+//            }
+//        }
         startDownLoad();
-        try {
-            Thread.sleep(1500);
-            initInfo();
-            initNotice();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        initInfo();
+        initNotice();
     }
 
 
@@ -464,7 +470,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
      * 如果list<id1>中没有，则根据id查询contentBean，去下载imgUrl
      * 之后调用init方法 搞定
      */
-    private void compareWithServer(List<List<ContentBean>> serverList, Boolean clearShared) {
+    private void compareWithServer(List<ContentBean> serverList, Boolean clearShared) {
         //之前本地的集合和集合Id
         List<ContentBean> beforeList = loadAllValidInformation();
         List<Long> beforeId = new ArrayList<>();
@@ -473,11 +479,11 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         }
         //服务器得到的集合和Id
         List<ContentBean> allList = new ArrayList<>();
-        for (int i = 0; i < serverList.size(); i++) {
-            if (serverList.get(i).size() != 0) {
-                allList.addAll(serverList.get(i));
-            }
-        }
+//        for (int i = 0; i < serverList.size(); i++) {
+//            if (serverList.get(i).size() != 0) {
+        allList.addAll(serverList);
+//            }
+//        }
         if (allList.size() == 0) {
             setInfoNull(-1);
         } else {
@@ -513,18 +519,18 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             //有相同id的，要比较它们的sortTime，如果发现有编辑过，那就保留网址，没编辑过，替换网址成local地址
             for (int i = 0; i < sameId.size(); i++) {
                 ContentBean beforeBean = queryContentById(sameId.get(i));
-                String[] imgUrl = beforeBean.getImageurl().replaceAll(" ", "").split(",");
+                String[] imgUrl = beforeBean.getResourcesUrl().replaceAll(" ", "").split(",");
                 ContentBean afterBean = afterList.get(sameIdIndex.get(i));
                 LogUtil.w("测试刷新", "相同Id它们的sort为：beforeBean：" + beforeBean.getSort() + " afterBean:" + afterBean.getSort());
                 if (beforeBean.getSort() >= afterBean.getSort()) {
                     if (isFileAllExists(imgUrl)) {
                         LogUtil.w("测试刷新", "更换网址为本地");
-                        afterBean.setImageurl(beforeBean.getImageurl());
+                        afterBean.setResourcesUrl(beforeBean.getResourcesUrl());
                     }
                 }
                 //编辑过，要把原来的多余数据删了
                 else {
-                    DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getImageurl());
+                    DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getResourcesUrl());
                     if (hasBgm(beforeBean))
                         DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getBgm());
                 }
@@ -532,7 +538,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             beforeId.removeAll(sameId);
             for (int i = 0; i < beforeId.size(); i++) {
                 ContentBean beforeBean = queryContentById(beforeId.get(i));
-                DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getImageurl());
+                DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getResourcesUrl());
                 if (hasBgm(beforeBean))
                     DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getBgm());
             }
@@ -540,14 +546,9 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             insertOrReplaceList(afterList);
             insertOrReplaceList(noticeList);
             startDownLoad();
-            try {
-                Thread.sleep(1500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
             initInfo();
             initNotice();
+            LogUtil.d("qidong", "对比完成");
         }
     }
 
@@ -566,7 +567,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         List<ContentBean> infoList = loadAllValidInformation();
         for (int i = 0; i < infoList.size(); i++) {
             ContentBean contentBean = infoList.get(i);
-            String[] urlList = contentBean.getImageurl().replaceAll(" ", "").split(",");
+            String[] urlList = contentBean.getResourcesUrl().replaceAll(" ", "").split(",");
             for (int j = 0; j < urlList.length; j++) {
                 DownLoadFileManager.getInstance().addDownloadTask(j, contentBean);
             }
@@ -842,8 +843,13 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         if (publishType == Constants.PUBLISH_TYPE_INFORMATION || publishType == Constants.PUBLISH_TYPE_ADVERT) {
             if (contentBean.getSpots() == Constants.IS_SPOTS && loadAllValidInformation().size() > 0) {
                 //开始插播资讯
-                startInterCutInfo(contentBean);
-            } else if (contentBean.getImageurl() != null && !contentBean.getImageurl().isEmpty()) {
+                if (!isCutting) {
+                    startInterCutInfo(contentBean);
+                } else {
+                    ToastUtil.l("请等待当前插播内容播放完毕");
+                    cutBean2 = contentBean;
+                }
+            } else if (contentBean.getResourcesUrl() != null && !contentBean.getResourcesUrl().isEmpty()) {
                 isInformation(contentBean);
             }
         }
@@ -853,7 +859,8 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         return contentBean.getTransformsound() != 1 && contentBean.getBgm() != null && !contentBean.getBgm().isEmpty();
     }
 
-    private void startInterCutInfo(ContentBean contentBean) {
+    private synchronized void startInterCutInfo(ContentBean contentBean) {
+        isCutting = true;
         if (informationTask != null)
             informationTask.cancel();
         ContentBean beforeBean = queryContentById(SharedPreferencesUtil.getInformationId());
@@ -921,7 +928,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                     cutVideoFragment.setIsSpots(true);
                     CustomerVideoView cutVideoView = cutVideoFragment.getCut_videoView();
                     LogUtil.w("idceshi", "要开始替换插播的id" + videoView.getCurrentPosition() + " " + cutVideoView.toString());
-                    cutVideoFragment.initVideoView(true, cutVideoView, contentBean.getImageurl());
+                    cutVideoFragment.initVideoView(true, cutVideoView, contentBean.getResourcesUrl());
                 }
                 break;
         }
@@ -944,7 +951,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             }
         };
         timer.schedule(interCutInfoTask, contentBean.getDuration() * 1000);
-        String[] imgUrl = contentBean.getImageurl().replaceAll(" ", "").split(",");
+        String[] imgUrl = contentBean.getResourcesUrl().replaceAll(" ", "").split(",");
         for (int i = 0; i < imgUrl.length; i++) {
             DownLoadFileManager.getInstance().addDownloadTask(i, contentBean);
         }
@@ -963,7 +970,6 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                     mediaPlayer.release();
                 }
             }
-
         }
         //插播的是视频，完后要把插播的视图隐藏
         if (cutType == Constants.IS_MOVIE) {
@@ -1011,6 +1017,21 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 videoView.start();
                 position = 0;
             }
+        }
+        isCutting = false;
+        EventBus.getDefault().post("CuttingFinish");
+    }
+
+    /**
+     * 接受更新ui的事件
+     *
+     * @param
+     */
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void CuttingFinish(String status) {
+        if (status.equals("CuttingFinish") && cutBean2 != null) {
+            startInterCutInfo(cutBean2);
+            cutBean2 = null;
         }
     }
 
@@ -1085,7 +1106,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             nextInformation(true);
         }
 
-        String[] imgUrl = contentBean.getImageurl().replaceAll(" ", "").split(",");
+        String[] imgUrl = contentBean.getResourcesUrl().replaceAll(" ", "").split(",");
         for (int i = 0; i < imgUrl.length; i++) {
             DownLoadFileManager.getInstance().addDownloadTask(i, contentBean);
         }
@@ -1129,10 +1150,10 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 nextPosition = 0;
             LogUtil.w("ceshi", "应该播的资讯坐标：" + nextPosition);
             ContentBean contentBean = informationList.get(nextPosition);
-            LogUtil.w("download", "看看之前的数据" + contentBean.getImageurl());
+            LogUtil.w("download", "看看之前的数据" + contentBean.getResourcesUrl());
             if (contentBean != null) {
                 showInfoContent(contentBean);
-//                String[] url = contentBean.getImageurl().split(",");
+//                String[] url = contentBean.getResourcesUrl().split(",");
 //                boolean hasHttp = false;
 //                boolean hasLocal = false;
 //                List<Integer> httpIndex = new ArrayList<>();
@@ -1158,7 +1179,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
 //                        showInfoContent(contentBean);
 //                    } else {
 //                        if (hasLocal) {
-//                            LogUtil.w("download", "断网后，有缓存过，看看现在的数据" + queryContentById(contentBean.getId()).getImageurl());
+//                            LogUtil.w("download", "断网后，有缓存过，看看现在的数据" + queryContentById(contentBean.getId()).getResourcesUrl());
 //                            showInfoContent(contentBean);
 //                        } else {
 //                            //没网并且没有已缓存过的，直接下一个

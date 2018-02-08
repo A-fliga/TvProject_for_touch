@@ -33,7 +33,7 @@ public class ContentBeanDao extends AbstractDao<ContentBean, Long> {
         public final static Property Starttime = new Property(6, long.class, "starttime", false, "STARTTIME");
         public final static Property Endtime = new Property(7, long.class, "endtime", false, "ENDTIME");
         public final static Property Content = new Property(8, String.class, "content", false, "CONTENT");
-        public final static Property Imageurl = new Property(9, String.class, "imageurl", false, "IMAGEURL");
+        public final static Property ResourcesUrl = new Property(9, String.class, "resourcesUrl", false, "RESOURCES_URL");
         public final static Property Imgormo = new Property(10, int.class, "imgormo", false, "IMGORMO");
         public final static Property Transformsound = new Property(11, int.class, "transformsound", false, "TRANSFORMSOUND");
         public final static Property UpdateBy = new Property(12, String.class, "updateBy", false, "UPDATE_BY");
@@ -76,7 +76,7 @@ public class ContentBeanDao extends AbstractDao<ContentBean, Long> {
                 "\"STARTTIME\" INTEGER NOT NULL ," + // 6: starttime
                 "\"ENDTIME\" INTEGER NOT NULL ," + // 7: endtime
                 "\"CONTENT\" TEXT," + // 8: content
-                "\"IMAGEURL\" TEXT," + // 9: imageurl
+                "\"RESOURCES_URL\" TEXT," + // 9: resourcesUrl
                 "\"IMGORMO\" INTEGER NOT NULL ," + // 10: imgormo
                 "\"TRANSFORMSOUND\" INTEGER NOT NULL ," + // 11: transformsound
                 "\"UPDATE_BY\" TEXT," + // 12: updateBy
@@ -128,9 +128,9 @@ public class ContentBeanDao extends AbstractDao<ContentBean, Long> {
             stmt.bindString(9, content);
         }
  
-        String imageurl = entity.getImageurl();
-        if (imageurl != null) {
-            stmt.bindString(10, imageurl);
+        String resourcesUrl = entity.getResourcesUrl();
+        if (resourcesUrl != null) {
+            stmt.bindString(10, resourcesUrl);
         }
         stmt.bindLong(11, entity.getImgormo());
         stmt.bindLong(12, entity.getTransformsound());
@@ -197,9 +197,9 @@ public class ContentBeanDao extends AbstractDao<ContentBean, Long> {
             stmt.bindString(9, content);
         }
  
-        String imageurl = entity.getImageurl();
-        if (imageurl != null) {
-            stmt.bindString(10, imageurl);
+        String resourcesUrl = entity.getResourcesUrl();
+        if (resourcesUrl != null) {
+            stmt.bindString(10, resourcesUrl);
         }
         stmt.bindLong(11, entity.getImgormo());
         stmt.bindLong(12, entity.getTransformsound());
@@ -258,7 +258,7 @@ public class ContentBeanDao extends AbstractDao<ContentBean, Long> {
             cursor.getLong(offset + 6), // starttime
             cursor.getLong(offset + 7), // endtime
             cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8), // content
-            cursor.isNull(offset + 9) ? null : cursor.getString(offset + 9), // imageurl
+            cursor.isNull(offset + 9) ? null : cursor.getString(offset + 9), // resourcesUrl
             cursor.getInt(offset + 10), // imgormo
             cursor.getInt(offset + 11), // transformsound
             cursor.isNull(offset + 12) ? null : cursor.getString(offset + 12), // updateBy
@@ -292,7 +292,7 @@ public class ContentBeanDao extends AbstractDao<ContentBean, Long> {
         entity.setStarttime(cursor.getLong(offset + 6));
         entity.setEndtime(cursor.getLong(offset + 7));
         entity.setContent(cursor.isNull(offset + 8) ? null : cursor.getString(offset + 8));
-        entity.setImageurl(cursor.isNull(offset + 9) ? null : cursor.getString(offset + 9));
+        entity.setResourcesUrl(cursor.isNull(offset + 9) ? null : cursor.getString(offset + 9));
         entity.setImgormo(cursor.getInt(offset + 10));
         entity.setTransformsound(cursor.getInt(offset + 11));
         entity.setUpdateBy(cursor.isNull(offset + 12) ? null : cursor.getString(offset + 12));

@@ -2,7 +2,7 @@
     <string name="app_name">政好</string>
     <string name="tv_tag">资讯</string>
     <string name="tv_notice_title">通知</string>
-    <!--<string name="asd">党建网络理政平台</string>-->
+    <!--<string names="asd">党建网络理政平台</string>-->
     <!--&#160;-->
     <string name="tv_right_content">智慧党建网络理政平台</string>
 </resources>

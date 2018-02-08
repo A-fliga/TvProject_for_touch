@@ -137,7 +137,7 @@ public class DaoUtil {
         ContentBean contentBean = queryContentById(id);
         if (contentBean != null) {
             if (contentBean.getPublishTypeId() == Constants.PUBLISH_TYPE_INFORMATION || contentBean.getPublishTypeId() == Constants.PUBLISH_TYPE_ADVERT) {
-                DownLoadFileManager.getInstance().addDeleteTask(queryContentById(id).getImageurl());
+                DownLoadFileManager.getInstance().addDeleteTask(queryContentById(id).getResourcesUrl());
                 if(contentBean.getTransformsound() != 1 && contentBean.getBgm() != null && !contentBean.getBgm().isEmpty()){
                     DownLoadFileManager.getInstance().addDeleteTask(queryContentById(id).getBgm());
                 }
@@ -227,6 +227,7 @@ public class DaoUtil {
                     ContentBeanDao.Properties.Endtime.lt(System.currentTimeMillis()))).list();
         }
         if (unValidList.size() != 0) {
+            LogUtil.d("qidong", "deleteContentList");
             deleteContentList(unValidList);
         }
         SharedPreferencesUtil.saveInfoPosition(loadAllInformation().indexOf(queryContentById(informationId)));
