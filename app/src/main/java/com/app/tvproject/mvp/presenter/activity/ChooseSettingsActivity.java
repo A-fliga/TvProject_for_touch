@@ -77,6 +77,7 @@ public class ChooseSettingsActivity extends ActivityPresenter<ChooseSettingsActi
     private ChooseSettingsAdapter.OnItemClickListener itemClickListener = resultBean -> {
         //如果点击的是设备ID，则更新设备状态，保存极光别名且回传设备id
         if (resultBean.equipmentnumber != null) {
+            ProgressDialogUtil.instance().startLoad();
             initSettings(resultBean);
         } else {
             //点击子项后 type要自加，保存已点击的id回退栈
@@ -89,22 +90,23 @@ public class ChooseSettingsActivity extends ActivityPresenter<ChooseSettingsActi
     private void initSettings(ChooseSettingsBean.ResultBean resultBean) {
         long id = resultBean.id;
         String alias;
-//        if (BuildConfig.DEBUG) {
-            alias = "CS_touchid" + id;
-//        } else {
-//            alias = Constants.JPUSH_NAME + id;
+////        if (BuildConfig.DEBUG) {
+        alias = "CS_touchid" + id;
+////        } else {
+//        alias = Constants.JPUSH_NAME + id;
 //        }
         //设置极光别名
         MyApplication.getAppContext().setAlisa(alias);
-        //保存设备id
-        SharedPreferencesUtil.saveEqId(this, id);
         backToMain(resultBean);
     }
 
     private void backToMain(ChooseSettingsBean.ResultBean resultBean) {
         Intent intent = new Intent();
         intent.putExtra("eqId", resultBean.id);
+        intent.putExtra("voice", resultBean.voice);
+        intent.putExtra("villageId", resultBean.villageId);
         setResult(Constants.CHOOSE_SETTINGS_RESULT_CODE, intent);
+//        ProgressDialogUtil.instance().stopLoad();
         finish();
     }
 

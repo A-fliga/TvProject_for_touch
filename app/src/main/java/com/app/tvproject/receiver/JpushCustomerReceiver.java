@@ -37,7 +37,7 @@ public class JpushCustomerReceiver extends BroadcastReceiver {
                 JSONObject jsonObject = new JSONObject(popUp);
                 String action = jsonObject.getString("action");
                 if (action.equals("newEquipmentNotice")) {
-                    int voice = jsonObject.getInt("voice");
+                    String voice = jsonObject.getString("voice");
                     eventBusData.setVoice(voice);
                 } else if (jsonObject.has("pdId")) {
                     eventBusData.setContent_id(jsonObject.getLong("pdId"));

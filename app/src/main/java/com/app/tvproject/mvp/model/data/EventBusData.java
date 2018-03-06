@@ -18,7 +18,7 @@ public class EventBusData {
 
 
 
-    private int voice;
+    private String voice;
     private String dormantStartTime;
     private int 资讯;
     private int 广告;
@@ -30,11 +30,11 @@ public class EventBusData {
     private int id;
     private String equipmentNumber;
 
-    public int getVoice() {
+    public String getVoice() {
         return voice;
     }
 
-    public void setVoice(int voice) {
+    public void setVoice(String voice) {
         this.voice = voice;
     }
 

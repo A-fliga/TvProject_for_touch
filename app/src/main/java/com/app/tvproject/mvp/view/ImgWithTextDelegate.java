@@ -41,4 +41,8 @@ public class ImgWithTextDelegate extends ViewDelegate {
         convenientBanner.setPages(InfoBannerAdapter::new, imgUrl);
         convenientBanner.startTurning(8000);
     }
+
+    public ConvenientBanner getConvenientBanner() {
+        return convenientBanner;
+    }
 }

@@ -4,6 +4,7 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.view.View;
 
 import com.app.tvproject.constants.Constants;
 import com.app.tvproject.mvp.model.data.ContentBean;
@@ -13,6 +14,7 @@ import com.app.tvproject.utils.BaiduVoiceUtil;
 import com.app.tvproject.utils.LogUtil;
 import com.app.tvproject.utils.NetUtil;
 import com.baidu.tts.client.SpeechSynthesizer;
+import com.bigkoo.convenientbanner.listener.OnItemClickListener;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -50,8 +52,7 @@ public class ImgWithTextFragment extends FragmentPresenter<ImgWithTextDelegate> 
         if (contentBean.getTransformsound() == 1) {
             if (contentBean.getSpots() == Constants.IS_SPOTS) {
                 speechSynthesizer = BaiduVoiceUtil.initTTs();
-            }
-            else speechSynthesizer = activity.getSpeechSynthesizer();
+            } else speechSynthesizer = activity.getSpeechSynthesizer();
             String text = contentBean.getContent().replaceAll(" ", "").replaceAll("\r|\n", "");
             String[] data = text.split("\\*");
             for (String aData : data) {
@@ -64,10 +65,10 @@ public class ImgWithTextFragment extends FragmentPresenter<ImgWithTextDelegate> 
                 mediaPlayer = new MediaPlayer();
             else {
                 mediaPlayer = activity.getMediaPlayer();
-                LogUtil.d("idceshi","fragment里的id："+mediaPlayer.toString());
+                LogUtil.d("idceshi", "fragment里的id：" + mediaPlayer.toString());
             }
             try {
-                mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+//                mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
                 mediaPlayer.setDataSource(contentBean.getBgm());
                 mediaPlayer.prepareAsync();
 
@@ -108,6 +109,7 @@ public class ImgWithTextFragment extends FragmentPresenter<ImgWithTextDelegate> 
             }
         }
         viewDelegate.showImgBanner(imgUrlList);
+        viewDelegate.getConvenientBanner().setOnItemClickListener(position -> getActivity().finish());
     }
 
     @Override

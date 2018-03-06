@@ -5,6 +5,10 @@
 
     <!--获取手机录音机使用权限，听写、识别、语义理解需要用到此权限 -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <!-- 开机启动所需权限 -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!--获取当前wifi状态 -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <!--允许程序改变网络连接状态 -->
@@ -14,14 +18,13 @@
     <!--读取手机信息权限 -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <!--wifi信息-->
-    <uses-permission android:name="android.permission.access_wifi_state" />
-    <uses-permission android:name="android.permission.access_network_state" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- 屏幕唤醒 -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -32,6 +35,8 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.RESTART_PACKAGES" />
     <uses-permission android:name="android.permission.INSTALL_PACKAGES" />
+
+    <uses-permission android:name="android.permission.READ_LOGS" />
 
 
     <application
@@ -45,8 +50,9 @@
         android:theme="@style/AppTheme.NoActionBar">
 
         <activity
-            android:name=".mvp.presenter.activity.MainActivity"
+            android:name=".mvp.presenter.activity.TouchScreenActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
+            android:launchMode="singleTask"
             android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -60,6 +66,10 @@
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:screenOrientation="landscape" />
 
+        <activity
+            android:name=".mvp.presenter.activity.MainActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:screenOrientation="landscape" />
 
         <!--极光推送 接受自定义消息-->
         <receiver
@@ -91,6 +101,13 @@
                 <data android:scheme="package" />
             </intent-filter>
 
+        </receiver>
+
+        <!-- 开机启动 -->
+        <receiver android:name=".receiver.AutoStartReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            </intent-filter>
         </receiver>
 
         <service android:name=".service.TimeService" />

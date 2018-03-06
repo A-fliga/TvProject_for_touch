@@ -13,6 +13,8 @@ import com.app.tvproject.mvp.view.CustomerView.CustomerVideoView;
 import com.app.tvproject.mvp.view.VideoFragmentDelegate;
 import com.app.tvproject.utils.LogUtil;
 
+import java.util.TimerTask;
+
 /**
  * Created by www on 2017/11/22.
  * 显示器的需求是一直在前台播放  所以不需要考虑home键再续播的问题
@@ -114,11 +116,13 @@ public class VideoFragment extends FragmentPresenter<VideoFragmentDelegate> {
                 videoView.stopPlayback();
                 if (activity.getInformationTask() != null) {
                     activity.getInformationTask().cancel();
+                    activity.setTaskNull(false);
                 }
             } else {
                 cut_videoView.stopPlayback();
                 if (activity.getInterCutInfoTask() != null) {
                     activity.getInterCutInfoTask().cancel();
+                    activity.setTaskNull(true);
                 }
             }
 

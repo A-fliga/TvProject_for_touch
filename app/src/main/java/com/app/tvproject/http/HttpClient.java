@@ -5,6 +5,7 @@ import com.app.tvproject.constants.Constants;
 import com.app.tvproject.mvp.model.data.BaseEntity;
 import com.app.tvproject.mvp.model.data.ChooseSettingsBean;
 import com.app.tvproject.mvp.model.data.ContentBean;
+import com.app.tvproject.mvp.model.data.EqInformationBean;
 import com.app.tvproject.mvp.model.data.PublishListBean;
 import com.app.tvproject.mvp.model.data.UpdateBean;
 import com.app.tvproject.mvp.model.data.UpdateUseEqBean;
@@ -75,7 +76,7 @@ public final class HttpClient {
         if (sHttpClient == null) {
             synchronized (HttpClient.class) {
                 if (sHttpClient == null) {
-                    sHttpClient = new HttpClient(BuildConfig.HOST+"/wzt/appTs/");
+                    sHttpClient = new HttpClient(BuildConfig.HOST + "/wzt/appTs/");
                 }
             }
         }
@@ -113,97 +114,112 @@ public final class HttpClient {
 
     /**
      * 获取省市区设备等信息
+     *
      * @param subscriber
      * @param type
      * @param id
      */
-    public void getSettingsData(Subscriber<ChooseSettingsBean> subscriber, String type, String id ){
-        HashMap<String,String> queryMap = new HashMap<>();
-        queryMap.put("type",type);
-        if(id != null)
-            queryMap.put("id",id);
+    public void getSettingsData(Subscriber<ChooseSettingsBean> subscriber, String type, String id) {
+        HashMap<String, String> queryMap = new HashMap<>();
+        queryMap.put("type", type);
+        if (id != null)
+            queryMap.put("id", id);
+        queryMap.put("eqType", "2");
         Observable observable = mApi.getSettingsData(queryMap);
-        toSubscribe(observable,subscriber);
+        toSubscribe(observable, subscriber);
     }
 
 
     /**
      * 更新设备为已使用状态
+     *
      * @param subscriber
      * @param eqId
      * @param use
      */
-    public void setEquipmentUsed(Subscriber<UpdateUseEqBean> subscriber, String eqId, String use){
-        HashMap<String,String> queryMap = new HashMap<>();
-        queryMap.put("eqId",eqId);
-        queryMap.put("use",use);
+    public void setEquipmentUsed(Subscriber<UpdateUseEqBean> subscriber, String eqId, String use) {
+        HashMap<String, String> queryMap = new HashMap<>();
+        queryMap.put("eqId", eqId);
+        queryMap.put("use", use);
         Observable observable = mApi.setEquipmentUsed(queryMap);
-        toSubscribe(observable,subscriber);
+        toSubscribe(observable, subscriber);
     }
 
     /**
      * 获取服务器正在播放的内容集合
+     *
      * @return
      */
-    public void getPublishList(Subscriber<PublishListBean> subscriber, String eqId, String publishTypeId){
-        HashMap<String,String> queryMap = new HashMap<>();
-        queryMap.put("eqId",eqId);
-        if(publishTypeId != null)
-            queryMap.put("publishTypeId",publishTypeId);
+    public void getPublishList(Subscriber<PublishListBean> subscriber, String eqId, String publishTypeId) {
+        HashMap<String, String> queryMap = new HashMap<>();
+        queryMap.put("eqId", eqId);
+        if (publishTypeId != null)
+            queryMap.put("publishTypeId", publishTypeId);
         Observable observable = mApi.getPublishList(queryMap);
-        toSubscribe(observable,subscriber);
+        toSubscribe(observable, subscriber);
     }
 
     /**
      * 更新设备连接状态
      */
 
-    public void updateEqStatus(Subscriber<UpdateUseEqBean> subscriber,String eqId, String status){
-        HashMap<String,String> queryMap = new HashMap<>();
-        queryMap.put("eqId",eqId);
-        queryMap.put("status",status);
+    public void updateEqStatus(Subscriber<UpdateUseEqBean> subscriber, String eqId, String status) {
+        HashMap<String, String> queryMap = new HashMap<>();
+        queryMap.put("eqId", eqId);
+        queryMap.put("status", status);
         Observable observable = mApi.updateEqStatus(queryMap);
-        toSubscribe(observable,subscriber);
+        toSubscribe(observable, subscriber);
     }
 
     /**
      * 获取天气
      */
-    public void getWeather(Subscriber<WeatherBean> subscriber){
+    public void getWeather(Subscriber<WeatherBean> subscriber) {
         Observable observable = mApi.getWeather();
-        toSubscribe(observable,subscriber);
+        toSubscribe(observable, subscriber);
     }
-
-
 
 
     /**
      * 获取推送的内容详情
+     *
      * @param subscriber
      * @param pdId
      * @param eqId
      */
-    public void getPublishContent(Subscriber<BaseEntity<ContentBean>> subscriber,String pdId,String eqId){
-        HashMap<String,String> queryMap = new HashMap<>();
-        queryMap.put("pdId",pdId);
-        queryMap.put("eqId",eqId);
+    public void getPublishContent(Subscriber<BaseEntity<ContentBean>> subscriber, String pdId, String eqId) {
+        HashMap<String, String> queryMap = new HashMap<>();
+        queryMap.put("pdId", pdId);
+        queryMap.put("eqId", eqId);
         Observable observable = mApi.getPublishContent(queryMap);
-        toSubscribe(observable,subscriber);
+        toSubscribe(observable, subscriber);
     }
 
     /**
      * 下载文件
      */
-    public void dowLoadFile(Subscriber<ResponseBody> subscriber,String url){
+    public void dowLoadFile(Subscriber<ResponseBody> subscriber, String url) {
         Observable observable = mApi.dowLoadFile(url);
-        toSubscribe(observable,subscriber);
+        toSubscribe(observable, subscriber);
     }
 
     /**
      * 更新APP
      */
-    public void getUpdateInfo(Subscriber<BaseEntity<UpdateBean>> subscriber){
-        Observable observable = mApi.getUpdateInfo();
-        toSubscribe(observable,subscriber);
+    public void getUpdateInfo(Subscriber<BaseEntity<UpdateBean>> subscriber) {
+        HashMap<String, String> queryMap = new HashMap<>();
+        queryMap.put("type", "3");
+        Observable observable = mApi.getUpdateInfo(queryMap);
+        toSubscribe(observable, subscriber);
+    }
+
+    /**
+     * 获取设备相关信息
+     */
+    public void getEqInfo(Subscriber<BaseEntity<EqInformationBean>> subscriber, String eqId) {
+        HashMap<String, String> queryMap = new HashMap<>();
+        queryMap.put("eqId", eqId);
+        Observable observable = mApi.getEqInfo(queryMap);
+        toSubscribe(observable, subscriber);
     }
 }
