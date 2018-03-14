@@ -100,6 +100,7 @@ public class DownLoadFileManager {
     /**
      * 获取单例对象
      * 双重校验锁
+     *
      * @return
      */
     public static DownLoadFileManager getInstance() {
@@ -139,6 +140,16 @@ public class DownLoadFileManager {
         }
     }
 
+    //删除未下载完成的脏数据
+    public void deleteTempData() {
+        File directory = new File(downloadDir);
+        if (directory.exists() && directory.isDirectory()) {
+            for (File item : directory.listFiles()) {
+                if (FileUtil.getFileSuffix(item.getPath()).equals(".temp"))
+                    item.delete();
+            }
+        }
+    }
 
     /**
      * 下载APK
@@ -201,25 +212,23 @@ public class DownLoadFileManager {
      */
     private void downLoadBgm(ContentBean contentBean, String bgmUrl) {
         if (bgmUrl.substring(0, 4).equals("http") && queryContentById(contentBean.getId()) != null) {
-            File bgm = new File(bgmUrl);
-            String downFileName = bgm.getName();
-            String fileSuffix = downFileName.substring(downFileName.lastIndexOf("."), downFileName.length());
+            String fileSuffix = FileUtil.getFileSuffix(bgmUrl);
             File fileDir = new File(downloadDir);
             if (!fileDir.exists()) {
                 fileDir.mkdirs();
             }
             //加进下载数组
-            String fileName = downloadDir + File.separator + System.currentTimeMillis() + fileSuffix;
+            String fileName = downloadDir + File.separator + System.currentTimeMillis() + ".temp";
             try {
                 URL url = new URL(bgmUrl);
                 LogUtil.w("download", contentBean.getHeadline() + "正在下载背景音乐");
                 // todo change the file location/names according to your needs
-                File futureStudioIconFile = new File(fileName);
-                if (!futureStudioIconFile.exists()) {
-                    futureStudioIconFile.createNewFile();
+                File tempFile = new File(fileName);
+                if (!tempFile.exists()) {
+                    tempFile.createNewFile();
                 }
                 InputStream is = url.openStream();
-                OutputStream os = new FileOutputStream(futureStudioIconFile);
+                OutputStream os = new FileOutputStream(tempFile);
                 long fileSizeDownloaded = 0;
                 try {
                     byte[] fileReader = new byte[4096];
@@ -238,15 +247,18 @@ public class DownLoadFileManager {
                     }
                     is.close();
                     os.close();
-                    //下载完要替换url
+                    //下载完要重命名
+                    File lastFile = new File(contentBean.getBgmDir());
+                    tempFile.renameTo(lastFile);
+
                     //查询保存过数据的contentBean
-                    contentBean.setBgm(fileName);
+//                    contentBean.setBgm(fileName);
                     //要检查一下下载过程中有没被停播,停播了要删掉文件
-                    if (queryContentById(contentBean.getId()) != null) {
-                        insertOrReplaceContent(contentBean);
-                        LogUtil.w("download", "插入BGM" + queryContentById(contentBean.getId()).getHeadline());
-                    } else {
-                        File file = new File(fileName);
+                    if (queryContentById(contentBean.getId()) == null) {
+//                        insertOrReplaceContent(contentBean);
+//                        LogUtil.w("download", "插入BGM" + queryContentById(contentBean.getId()).getHeadline());
+//                    } else {
+                        File file = new File(contentBean.getBgmDir());
                         if (file.exists())
                             file.delete();
                     }
@@ -255,15 +267,12 @@ public class DownLoadFileManager {
                 } finally {
                     if (os != null) {
                         os.close();
-
                     }
                     if (is != null) {
                         is.close();
 
                     }
                 }
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -278,33 +287,31 @@ public class DownLoadFileManager {
         String[] downLoadUrl = contentBean.getResourcesUrl().replaceAll(" ", "").split(",");
         for (int i = 0; i < downLoadUrl.length; i++) {
             //是对应位置，且以http开头，且数据库的数据还在，才去提交下载
-            if (i == downloadPosition && !downLoadUrl[downloadPosition].isEmpty() && downLoadUrl[downloadPosition].substring(0, 4).equals("http")
+            if (i == downloadPosition && !downLoadUrl[downloadPosition].isEmpty()
                     && queryContentById(contentBean.getId()) != null) {
                 LogUtil.w("download", "提交下载" + contentBean.getHeadline() + "的第" + downloadPosition + "条连接");
                 LogUtil.w("download", "看看数据" + contentBean.getResourcesUrl());
                 String path = downLoadUrl[i];
                 if (path != null && !path.isEmpty()) {
                     //判断文件类型
-                    File downloadFile = new File(path);
-                    String downFileName = downloadFile.getName();
-                    String fileSuffix = downFileName.substring(downFileName.lastIndexOf("."), downFileName.length());
+//                    String fileSuffix = FileUtil.getFileSuffix(path);
                     File fileDir = new File(downloadDir);
                     if (!fileDir.exists()) {
                         fileDir.mkdirs();
                     }
                     //加进下载数组
-                    String fileName = downloadDir + File.separator + System.currentTimeMillis() + fileSuffix;
+                    String fileName = downloadDir + File.separator + System.currentTimeMillis() + ".temp";
 
                     try {
                         URL url = new URL(path);
                         LogUtil.w("download", "正在下载" + contentBean.getHeadline() + "的第" + downloadPosition + "条连接");
                         // todo change the file location/names according to your needs
-                        File futureStudioIconFile = new File(fileName);
-                        if (!futureStudioIconFile.exists()) {
-                            futureStudioIconFile.createNewFile();
+                        File tempFile = new File(fileName);
+                        if (!tempFile.exists()) {
+                            tempFile.createNewFile();
                         }
                         InputStream is = url.openStream();
-                        OutputStream os = new FileOutputStream(futureStudioIconFile);
+                        OutputStream os = new FileOutputStream(tempFile);
                         long fileSizeDownloaded = 0;
                         try {
                             byte[] fileReader = new byte[4096];
@@ -324,32 +331,38 @@ public class DownLoadFileManager {
                             is.close();
                             os.close();
                             //下载完要替换url
-                            //查询保存过数据的contentBean
-                            StringBuffer buffer = new StringBuffer();
+//                            //查询保存过数据的contentBean
+//                            StringBuffer buffer = new StringBuffer();
                             ContentBean mContentBean = queryContentById(contentBean.getId());
-                            //只替换对应位置的imgUrl，要不会出现重复下载的问题
-                            String[] mPath = mContentBean.getResourcesUrl().replaceAll(" ", "").split(",");
-                            for (int j = 0; j < mPath.length; j++) {
-                                if (j == downloadPosition) {
-                                    mPath[j] = fileName;
-                                }
-                                buffer.append(mPath[j]);
-                                if (j < mPath.length - 1) {
-                                    buffer.append(",");
-                                }
-                            }
-                            LogUtil.w("download", "替换完成第" + downloadPosition + "条连接 " + buffer.toString());
-                            mContentBean.setResourcesUrl(buffer.toString());
                             //要检查一下下载过程中有没被停播,停播了要删掉文件
-                            if (queryContentById(mContentBean.getId()) != null) {
-                                insertOrReplaceContent(mContentBean);
-                                LogUtil.w("download", "插入第" + downloadPosition + "条连接 " + queryContentById(contentBean.getId()).getResourcesUrl());
-                            } else {
-                                File file = new File(fileName);
+                            if (mContentBean == null) {
+//                                insertOrReplaceContent(mContentBean);
+//                                LogUtil.w("download", "插入第" + downloadPosition + "条连接 " + queryContentById(contentBean.getId()).getResourcesUrl());
+//                            } else {
+                                File file = new File(contentBean.getResourcesDir());
                                 if (file.exists())
                                     file.delete();
+                            } else {
+                                LogUtil.w("download", "下载完成" + contentBean.getHeadline() + "的第" + downloadPosition + "条连接");
+                                //下载完成重命名
+                                String resultName[] = mContentBean.getResourcesDir().split(",");
+                                File lastName = new File(resultName[i]);
+                                tempFile.renameTo(lastName);
                             }
-                            LogUtil.w("download", "下载完成" + contentBean.getHeadline() + "的第" + downloadPosition + "条连接");
+                            //只替换对应位置的imgUrl，要不会出现重复下载的问题
+//                            String[] mPath = mContentBean.getResourcesUrl().replaceAll(" ", "").split(",");
+//                            for (int j = 0; j < mPath.length; j++) {
+//                                if (j == downloadPosition) {
+//                                    mPath[j] = fileName;
+//                                }
+//                                buffer.append(mPath[j]);
+//                                if (j < mPath.length - 1) {
+//                                    buffer.append(",");
+//                                }
+//                            }
+//                            LogUtil.w("download", "替换完成第" + downloadPosition + "条连接 " + buffer.toString());
+//                            mContentBean.setResourcesDir(buffer.toString());
+
                         } catch (IOException e) {
                         } finally {
                             if (os != null) {
@@ -361,8 +374,6 @@ public class DownLoadFileManager {
 
                             }
                         }
-                    } catch (FileNotFoundException e) {
-                        e.printStackTrace();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

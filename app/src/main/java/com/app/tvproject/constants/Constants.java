@@ -48,7 +48,7 @@ public final class Constants {
 
     //资讯内容的类型
     public static final int IS_IMAGE = 1;
-    public static final int IS_MOVIE = 2;
+    public static final int IS_VIDEO = 2;
 
     //是否属于插播
     public static final int IS_SPOTS = 1;

@@ -198,7 +198,7 @@ public final class HttpClient {
     /**
      * 下载文件
      */
-    public void dowLoadFile(Subscriber<ResponseBody> subscriber, String url) {
+    public void downLoadFile(Subscriber<ResponseBody> subscriber, String url) {
         Observable observable = mApi.dowLoadFile(url);
         toSubscribe(observable, subscriber);
     }

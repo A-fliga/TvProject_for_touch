@@ -18,8 +18,7 @@ import java.util.TimeZone;
  * Created by Administrator on 2017/9/29 0029.
  */
 
-public class
-AlarmService extends Service {
+public class AlarmService extends Service {
     Context context;
 
     @Nullable

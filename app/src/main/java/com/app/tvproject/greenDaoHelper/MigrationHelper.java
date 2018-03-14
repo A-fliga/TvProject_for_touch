@@ -33,7 +33,7 @@ public class MigrationHelper {
     }
 
     //第二个参数为需要修改的key
-    public void migrate(Database db, Map<String,String> newKeyMap, Class<? extends AbstractDao<?, ?>>... daoClasses) {
+    public void migrate(Database db, Class<? extends AbstractDao<?, ?>>... daoClasses) {
         //1. 备份表
         generateTempTables(db, daoClasses);
         //2. 删除所有表
@@ -44,11 +44,8 @@ public class MigrationHelper {
         //DaoMaster.createAllTables(db, false);
         createOriginalTables(db, daoClasses);
         //4. 恢复数据  如果改过key，恢复数据时需要特别注意一下
-        if (newKeyMap != null && !newKeyMap.isEmpty())
-            restoreData(db,newKeyMap, daoClasses);
-        else restoreData(db, null,daoClasses);
+        restoreData(db, daoClasses);
     }
-
 
 
     /**
@@ -146,29 +143,20 @@ public class MigrationHelper {
     /**
      * 恢复数据
      */
-    private void restoreData(Database db, Map<String,String> newKeyMap,Class<? extends AbstractDao<?, ?>>... daoClasses) {
+    private void restoreData(Database db, Class<? extends AbstractDao<?, ?>>... daoClasses) {
         for (int i = 0; i < daoClasses.length; i++) {
             DaoConfig daoConfig = new DaoConfig(db, daoClasses[i]);
 
             String tableName = daoConfig.tablename;
             String tempTableName = daoConfig.tablename.concat("_TEMP");
             ArrayList<String> properties = new ArrayList();
-            ArrayList<String> newProperties = new ArrayList<>();
+
             for (int j = 0; j < daoConfig.properties.length; j++) {
                 String columnName = daoConfig.properties[j].columnName;
 
                 if (getColumns(db, tempTableName).contains(columnName)) {
                     properties.add(columnName);
-                    newProperties.add(columnName);
                 }
-//               if(newKeyMap != null && !newKeyMap.isEmpty()){
-//                   for (String o : newKeyMap.keySet()) {
-//                       if (getColumns(db, tempTableName).contains(o)) {
-//                           properties.add(o);
-//                           newProperties.add(newKeyMap);
-//                       }
-//                   }
-//               }
             }
 
             StringBuilder insertTableStringBuilder = new StringBuilder();

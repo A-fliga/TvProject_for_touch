@@ -11,9 +11,8 @@ import com.app.tvproject.mvp.model.data.ContentBean;
 import com.app.tvproject.mvp.presenter.activity.MainActivity;
 import com.app.tvproject.mvp.view.CustomerView.CustomerVideoView;
 import com.app.tvproject.mvp.view.VideoFragmentDelegate;
+import com.app.tvproject.utils.FileUtil;
 import com.app.tvproject.utils.LogUtil;
-
-import java.util.TimerTask;
 
 /**
  * Created by www on 2017/11/22.
@@ -65,9 +64,13 @@ public class VideoFragment extends FragmentPresenter<VideoFragmentDelegate> {
         videoView = viewDelegate.get(R.id.videoView);
         cut_videoView = viewDelegate.get(R.id.videoView_interCut);
         if (contentBean != null) {
+            String videoPath;
+            if (FileUtil.isFileExists(contentBean.getResourcesDir()))
+                videoPath = contentBean.getResourcesDir();
+            else videoPath = contentBean.getResourcesUrl();
             if (isSpots)
-                initVideoView(true, cut_videoView, contentBean.getResourcesUrl());
-            else initVideoView(false, videoView, contentBean.getResourcesUrl());
+                initVideoView(true, cut_videoView, videoPath);
+            else initVideoView(false, videoView, videoPath);
         }
     }
 
@@ -140,18 +143,24 @@ public class VideoFragment extends FragmentPresenter<VideoFragmentDelegate> {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (!isSpots) {
-            if (videoView != null && videoView.isPlaying()) {
-                videoView.pause();
-                videoView.stopPlayback();
-                LogUtil.w("xiaohui", "视频fragment被销毁");
+        try {
+
+            if (!isSpots) {
+
+                if (videoView != null && videoView.isPlaying()) {
+                    videoView.pause();
+                    videoView.stopPlayback();
+                    LogUtil.w("xiaohui", "视频fragment被销毁");
+                }
+            } else {
+                if (cut_videoView != null && cut_videoView.isPlaying()) {
+                    cut_videoView.pause();
+                    cut_videoView.stopPlayback();
+                    LogUtil.w("xiaohui", "视频fragment被销毁");
+                }
             }
-        } else {
-            if (cut_videoView != null && cut_videoView.isPlaying()) {
-                cut_videoView.pause();
-                cut_videoView.stopPlayback();
-                LogUtil.w("xiaohui", "视频fragment被销毁");
-            }
+        } catch (IllegalStateException e) {
+
         }
     }
 }

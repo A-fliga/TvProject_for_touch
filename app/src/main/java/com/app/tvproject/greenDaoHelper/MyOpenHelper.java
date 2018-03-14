@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.app.tvproject.utils.ToastUtil;
+import com.zh.greendao.ContentBeanDao;
 import com.zh.greendao.DaoMaster;
 
 import org.greenrobot.greendao.database.Database;
@@ -31,11 +32,12 @@ public class MyOpenHelper extends DaoMaster.OpenHelper {
     public void onUpgrade(Database db, int oldVersion, int newVersion) {
         super.onUpgrade(db, oldVersion, newVersion);
         //注意历史数据库版本
-        ToastUtil.l("oldVersion" + oldVersion + "new:" + newVersion);
+//        ToastUtil.l("oldVersion" + oldVersion + "new:" + newVersion);
         switch (oldVersion) {
             case 2:
 //                TestBeanDao.createTable(db, false);
-            case 8:
+                MigrationHelper.getInstance().migrate(db, ContentBeanDao.class);
+            case 3:
 //                Map<String,String> keyMap = new HashMap<>();
 //                keyMap.put("myString222","myStringtest");
 //                MigrationHelper.getInstance().migrate(db,keyMap,TestBeanDao.class);

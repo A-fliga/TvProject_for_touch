@@ -11,10 +11,7 @@ import com.app.tvproject.mvp.model.data.UpdateUseEqBean;
 import com.app.tvproject.mvp.model.data.WeatherBean;
 import com.app.tvproject.utils.NetUtil;
 
-import java.util.HashMap;
-
 import okhttp3.ResponseBody;
-import rx.Observable;
 import rx.Subscriber;
 
 /**
@@ -97,7 +94,7 @@ public class PublicModel implements IModel {
      * 下载文件
      */
     public synchronized void dowLoadFile(Subscriber<ResponseBody> subscriber, String url) {
-        HttpClient.getInstance().dowLoadFile(subscriber, url);
+        HttpClient.getInstance().downLoadFile(subscriber, url);
     }
 
 

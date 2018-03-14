@@ -1,5 +1,6 @@
 package com.app.tvproject.mvp.presenter.activity;
 
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -21,7 +22,6 @@ import com.app.tvproject.mvp.adapter.InfoListAdapter;
 import com.app.tvproject.mvp.model.PublicModel;
 import com.app.tvproject.mvp.model.data.BaseEntity;
 import com.app.tvproject.mvp.model.data.ContentBean;
-import com.app.tvproject.mvp.model.data.EqInformationBean;
 import com.app.tvproject.mvp.model.data.EventBusData;
 import com.app.tvproject.mvp.model.data.PublishListBean;
 import com.app.tvproject.mvp.model.data.UpdateUseEqBean;
@@ -36,6 +36,7 @@ import com.app.tvproject.receiver.NetBroadCastReceiver;
 import com.app.tvproject.utils.BaiduVoiceUtil;
 import com.app.tvproject.utils.ControlVolumeUtil;
 import com.app.tvproject.utils.DownLoadFileManager;
+import com.app.tvproject.utils.FileUtil;
 import com.app.tvproject.utils.LogUtil;
 import com.app.tvproject.utils.NetUtil;
 import com.app.tvproject.utils.SharedPreferencesUtil;
@@ -101,9 +102,10 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     private ContentBean cutBean2 = null;//二次插播的数据
     //测试信息用的
     private TextView info_tv;
-    private RecyclerView recyclerView;
+    private RecyclerView recyclerView, notice_list_recycler;
     private List<ContentBean> beanList = new ArrayList<>();
-    private InfoListAdapter adapter;
+    private List<ContentBean> noticeList = new ArrayList<>();
+    private InfoListAdapter adapter, adapter2;
 
     @Override
     public Class<MainActivityDelegate> getDelegateClass() {
@@ -114,13 +116,18 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        hideUI(true);
         DownLoadFileManager.getInstance().stopDownLoad(false);
         Bundle bundle = getIntent().getExtras();
         info_tv = (TextView) findViewById(R.id.info_tv);
         recyclerView = viewDelegate.get(R.id.info_list_recycler);
+        notice_list_recycler = viewDelegate.get(R.id.notice_list_recycler);
         if (bundle != null) {
             eqId = bundle.getLong("eqId", -1);
-            info_tv.setText("当前设备：" + eqId);
+//            info_tv.setText("当前设备：" + eqId);
+            //删除下载的临时数据
+            DownLoadFileManager.getInstance().deleteTempData();
+            //初始化服务器数据
             initServiceData();
         } else ToastUtil.l("数据出错");
 //        eqId = getIntent().getLongExtra("eqId", -1);
@@ -129,6 +136,15 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
 
         //把logCat写到本地
 //        log2File();
+    }
+
+    private void hideUI(Boolean disable) {
+        Intent i;
+        if (disable)
+            i = new Intent("com.android.systembar.disable");
+        else
+            i = new Intent("com.android.systembar.enable");
+        sendBroadcast(i);
     }
 
 
@@ -232,31 +248,33 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         if (informationList.size() != 0) {
             beanList.clear();
             beanList.addAll(informationList);
-            initRecycler(beanList);
+            adapter = new InfoListAdapter(this, beanList, true);
+            initRecycler(recyclerView, adapter);
             nextInformation(true);
         } else {
             setInfoNull(-1);
         }
     }
 
-    private void initRecycler(List<ContentBean> beanList) {
-        adapter = new InfoListAdapter(this, beanList);
+    private void initRecycler(RecyclerView recyclerView, InfoListAdapter adapter) {
+
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         linearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setHasFixedSize(true);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(adapter);
-
     }
 
     private void getPublishList(Boolean deleteAll, Boolean clearShared) {
-        if (NetUtil.isConnectNoToast()) {
-            //获取设备的播放列表
-            getPublishDetailList(eqId, deleteAll, clearShared);
-        } else {
-            // 没网络就只播放本地数据库的内容
-            startLocalDataPlay();
+        if (viewDelegate != null) {
+            if (NetUtil.isConnectNoToast()) {
+                //获取设备的播放列表
+                getPublishDetailList(eqId, deleteAll, clearShared);
+            } else {
+                // 没网络就只播放本地数据库的内容
+                startLocalDataPlay();
+            }
         }
     }
 
@@ -265,6 +283,10 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         //取出通知
         List<ContentBean> notice = loadAllValidNotice();
         if (notice.size() != 0) {
+            noticeList.clear();
+            noticeList.addAll(notice);
+            adapter2 = new InfoListAdapter(this, noticeList, false);
+            initRecycler(notice_list_recycler, adapter2);
             nextNotice(true);
         } else viewDelegate.setNoticeNull();
     }
@@ -381,12 +403,12 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
      * 之后调用init方法 搞定
      */
     private void compareWithServer(List<ContentBean> serverList, Boolean clearShared) {
-        //之前本地的集合和集合Id
-        List<ContentBean> beforeList = loadAllValidInformation();
-        List<Long> beforeId = new ArrayList<>();
-        for (int i = 0; i < beforeList.size(); i++) {
-            beforeId.add(beforeList.get(i).getId());
-        }
+//        //之前本地的集合和集合Id
+//        List<ContentBean> beforeList = loadAllValidInformation();
+//        List<Long> beforeId = new ArrayList<>();
+//        for (int i = 0; i < beforeList.size(); i++) {
+//            beforeId.add(beforeList.get(i).getId());
+//        }
         //服务器得到的集合和Id
         List<ContentBean> allList = new ArrayList<>();
 //        for (int i = 0; i < serverList.size(); i++) {
@@ -397,70 +419,79 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         if (allList.size() == 0) {
             setInfoNull(-1);
         } else {
-
-            List<ContentBean> afterList = new ArrayList<>();
+            List<ContentBean> infoList = new ArrayList<>();
             List<ContentBean> noticeList = new ArrayList<>();
+            List<ContentBean> resultList = new ArrayList<>();
             for (int i = 0; i < allList.size(); i++) {
                 if (allList.get(i).getPublishTypeId() == Constants.PUBLISH_TYPE_INFORMATION || allList.get(i).getPublishTypeId() == Constants.PUBLISH_TYPE_ADVERT)
-                    afterList.add(allList.get(i));
+                    infoList.add(allList.get(i));
                 if (allList.get(i).getPublishTypeId() == Constants.PUBLISH_TYPE_NOTICE) {
                     noticeList.add(allList.get(i));
                 }
             }
-
-            List<Long> afterId = new ArrayList<>();
-            for (int i = 0; i < afterList.size(); i++) {
-                afterId.add(afterList.get(i).getId());
-            }
-
-            //要找出相同的Id和对应下标
-            List<Long> sameId = new ArrayList<>();
-            List<Integer> sameIdIndex = new ArrayList<>();
-            for (int j = 0; j < afterId.size(); j++) {
-                for (int i = 0; i < beforeId.size(); i++) {
-                    if (beforeId.get(i).equals(afterId.get(j))) {
-                        LogUtil.w("测试刷新", "有相同的id，id值为：" + afterId.get(j) + "标题为:" + queryContentById(afterId.get(j)).getHeadline() + "在after的下标为:" + j);
-                        sameId.add(afterId.get(j));
-                        sameIdIndex.add(j);
-                    }
+            for (int i = 0; i < infoList.size(); i++) {
+                ContentBean bean = infoList.get(i);
+                bean.setResourcesDir(FileUtil.getFileName(bean));
+                if (hasBgm(bean)) {
+                    bean.setBgmDir(FileUtil.getBgmFileName(bean));
                 }
+                resultList.add(bean);
             }
 
-            //有相同id的，要比较它们的sortTime，如果发现有编辑过，那就保留网址，没编辑过，替换网址成local地址
-            for (int i = 0; i < sameId.size(); i++) {
-                ContentBean beforeBean = queryContentById(sameId.get(i));
-                String[] imgUrl = beforeBean.getResourcesUrl().replaceAll(" ", "").split(",");
-                ContentBean afterBean = afterList.get(sameIdIndex.get(i));
-                LogUtil.w("测试刷新", "相同Id它们的sort为：beforeBean：" + beforeBean.getSort() + " afterBean:" + afterBean.getSort());
-                if (beforeBean.getSort() >= afterBean.getSort()) {
-                    if (isFileAllExists(imgUrl)) {
-                        LogUtil.w("测试刷新", "更换网址为本地");
-                        afterBean.setResourcesUrl(beforeBean.getResourcesUrl());
-                    }
-                }
-                //编辑过，要把原来的多余数据删了
-                else {
-                    DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getResourcesUrl());
-                    if (hasBgm(beforeBean))
-                        DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getBgm());
-                }
-            }
-            beforeId.removeAll(sameId);
-            for (int i = 0; i < beforeId.size(); i++) {
-                ContentBean beforeBean = queryContentById(beforeId.get(i));
-                DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getResourcesUrl());
-                if (hasBgm(beforeBean))
-                    DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getBgm());
-            }
+//            List<Long> afterId = new ArrayList<>();
+//            for (int i = 0; i < afterList.size(); i++) {
+//                afterId.add(afterList.get(i).getId());
+//            }
+//
+//            //要找出相同的Id和对应下标
+//            List<Long> sameId = new ArrayList<>();
+//            List<Integer> sameIdIndex = new ArrayList<>();
+//            for (int j = 0; j < afterId.size(); j++) {
+//                for (int i = 0; i < beforeId.size(); i++) {
+//                    if (beforeId.get(i).equals(afterId.get(j))) {
+//                        LogUtil.w("测试刷新", "有相同的id，id值为：" + afterId.get(j) + "标题为:" + queryContentById(afterId.get(j)).getHeadline() + "在after的下标为:" + j);
+//                        sameId.add(afterId.get(j));
+//                        sameIdIndex.add(j);
+//                    }
+//                }
+//            }
+//
+//            //有相同id的，要比较它们的sortTime，如果发现有编辑过，那就保留网址，没编辑过，替换网址成local地址
+//            for (int i = 0; i < sameId.size(); i++) {
+//                ContentBean beforeBean = queryContentById(sameId.get(i));
+//                String[] imgUrl = beforeBean.getResourcesUrl().replaceAll(" ", "").split(",");
+//                ContentBean afterBean = afterList.get(sameIdIndex.get(i));
+//                LogUtil.w("测试刷新", "相同Id它们的sort为：beforeBean：" + beforeBean.getSort() + " afterBean:" + afterBean.getSort());
+//                if (beforeBean.getSort() >= afterBean.getSort()) {
+//                    if (isFileAllExists(imgUrl)) {
+//                        LogUtil.w("测试刷新", "更换网址为本地");
+//                        afterBean.setResourcesUrl(beforeBean.getResourcesUrl());
+//                    }
+//                }
+//                //编辑过，要把原来的多余数据删了
+//                else {
+//                    DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getResourcesUrl());
+//                    if (hasBgm(beforeBean))
+//                        DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getBgm());
+//                }
+//            }
+//            beforeId.removeAll(sameId);
+//            for (int i = 0; i < beforeId.size(); i++) {
+//                ContentBean beforeBean = queryContentById(beforeId.get(i));
+//                DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getResourcesUrl());
+//                if (hasBgm(beforeBean))
+//                    DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getBgm());
+//            }
             deleteDataAndShared(false, clearShared);
-            insertOrReplaceList(afterList);
+            insertOrReplaceList(resultList);
             insertOrReplaceList(noticeList);
             startDownLoad();
             initInfo();
             initNotice();
-            LogUtil.d("qidong", "对比完成");
+//            LogUtil.d("qidong", "对比完成");
         }
     }
+
 
     //对比文件是否都存在
     private Boolean isFileAllExists(String[] imgUrl) {
@@ -477,10 +508,14 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         List<ContentBean> infoList = loadAllValidInformation();
         for (int i = 0; i < infoList.size(); i++) {
             ContentBean contentBean = infoList.get(i);
-            String[] urlList = contentBean.getResourcesUrl().replaceAll(" ", "").split(",");
-            for (int j = 0; j < urlList.length; j++) {
-                DownLoadFileManager.getInstance().addDownloadTask(j, contentBean);
+            String[] urlList = contentBean.getResourcesDir().replaceAll(" ", "").split(",");
+            if (!isFileAllExists(urlList)) {
+                for (int j = 0; j < urlList.length; j++) {
+                    DownLoadFileManager.getInstance().addDownloadTask(j, contentBean);
+                }
             }
+            if (hasBgm(contentBean) && !FileUtil.isFileExists(contentBean.getBgmDir()))
+                DownLoadFileManager.getInstance().addDownLoadBgm(contentBean);
         }
     }
 
@@ -517,7 +552,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
 
                         @Override
                         public void onError(Throwable e) {
-                            LogUtil.w("weather", e.toString());
+//                            LogUtil.w("weather", e.toString());
                         }
 
                         @Override
@@ -553,7 +588,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         switch (action) {
             //处理内容信息
             case "pushNotice":
-                info_tv.setText("设备Id:" + eqId + " 收到的内容Id:" + contentId);
+//                info_tv.setText("设备Id:" + eqId + " 收到的内容Id:" + contentId);
                 getPublishContent(contentId);
                 break;
             //处理设备信息
@@ -596,8 +631,8 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                         //停播的是资讯
                         case Constants.PUBLISH_TYPE_INFORMATION:
                         case Constants.PUBLISH_TYPE_ADVERT:
-                            beanList.remove(contentBean);
-                            adapter.notifyDataSetChanged();
+//                            beanList.remove(contentBean);
+//                            adapter.notifyDataSetChanged();
                             DownLoadFileManager.getInstance().setStopId(contentId);
                             stopInformation(contentId, contentBean);
                             DownLoadFileManager.getInstance().setStopId(-1);
@@ -659,7 +694,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         NullInfoFragment nullInfoFragment = new NullInfoFragment();
         if (isImg == Constants.IS_IMAGE)
             transaction.replace(R.id.img_frameLayout, nullInfoFragment).commit();
-        if (isImg == Constants.IS_MOVIE)
+        if (isImg == Constants.IS_VIDEO)
             transaction.replace(R.id.videoFrameLayout, nullInfoFragment).commit();
         if (isImg == -1) {
             viewDelegate.setImgFrameVisibility(false);
@@ -730,14 +765,15 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
 
             @Override
             public void onError(Throwable e) {
-                LogUtil.w(e.toString());
+//                LogUtil.w(e.toString());
             }
 
             @Override
             public void onNext(BaseEntity<ContentBean> contentBeanBaseEntity) {
-//                beanList.add(contentBeanBaseEntity.getResult());
-//                adapter.notifyDataSetChanged();
-                startShowContent(contentBeanBaseEntity.getResult());
+                beanList.add(contentBeanBaseEntity.getResult());
+                if (adapter != null)
+//                    adapter.notifyDataSetChanged();
+                    startShowContent(contentBeanBaseEntity.getResult());
             }
         }, String.valueOf(contentId), String.valueOf(eqId));
     }
@@ -819,7 +855,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                     viewDelegate.setImgFrameVisibility(false);
                     break;
                 //原本播放的是视频
-                case Constants.IS_MOVIE:
+                case Constants.IS_VIDEO:
                     if (cutType == Constants.IS_IMAGE)
                         viewDelegate.setVideoFrameVisibility(false);
                     if (videoFragment != null) {
@@ -835,6 +871,9 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             }
         }
         cutInfoTime = System.currentTimeMillis() - cutInfoTime;
+        contentBean.setResourcesDir(FileUtil.getFileName(contentBean));
+        if (hasBgm(contentBean))
+            contentBean.setBgmDir(FileUtil.getBgmFileName(contentBean));
         insertOrReplaceContent(contentBean);
         interCutInfoId = contentBean.getId();
 
@@ -853,7 +892,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 }
                 break;
             //插播的是视频
-            case Constants.IS_MOVIE:
+            case Constants.IS_VIDEO:
                 viewDelegate.setTagContent(null);
                 if (beforeBean != null && beforeBean.getImgormo() == Constants.IS_IMAGE) {
                     setLogoAndTitle(false, contentBean.getHeadline());
@@ -861,7 +900,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                     viewDelegate.setVisibility(false);
                     beginInterCutTransaction(false, cutVideoFragment, contentBean);
                 }
-                if (beforeBean != null && beforeBean.getImgormo() == Constants.IS_MOVIE) {
+                if (beforeBean != null && beforeBean.getImgormo() == Constants.IS_VIDEO) {
                     cutVideoFragment = videoFragment;
                     cutVideoFragment.setMContentBean(contentBean);
                     cutVideoFragment.setIsSpots(true);
@@ -906,18 +945,14 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             if (mSpeechSynthesizer != null)
                 mSpeechSynthesizer.stop();
             if (hasBgm(cutBean)) {
-                MediaPlayer mediaPlayer = cutImgFragment.getMediaPlayer();
-                if (mediaPlayer != null) {
-                    mediaPlayer.stop();
-                    mediaPlayer.release();
-                }
+                cutImgFragment.stopMediaPlayer();
             }
         }
         //插播的是视频，完后要把插播的视图隐藏
-        if (cutType == Constants.IS_MOVIE) {
+        if (cutType == Constants.IS_VIDEO) {
             if (cutVideoFragment != null) {
                 CustomerVideoView cutVideo = cutVideoFragment.getVideoView();
-                if (beforeBean != null && beforeBean.getImgormo() == Constants.IS_MOVIE) {
+                if (beforeBean != null && beforeBean.getImgormo() == Constants.IS_VIDEO) {
                     //一定要恢复标志位
                     cutVideoFragment.setIsSpots(false);
                 }
@@ -945,7 +980,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 mediaPlayer.start();
             }
         }
-        if (beforeBean != null && beforeBean.getImgormo() == Constants.IS_MOVIE) {
+        if (beforeBean != null && beforeBean.getImgormo() == Constants.IS_VIDEO) {
             setLogoAndTitle(false, beforeBean.getHeadline());
             viewDelegate.setVideoFrameVisibility(true);
             if (videoView != null) {
@@ -1029,6 +1064,9 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     //为资讯类的操作
     private void isInformation(ContentBean contentBean) {
         LogUtil.d("load", loadAllValidInformation().size() + "");
+        contentBean.setResourcesDir(FileUtil.getFileName(contentBean));
+        if (hasBgm(contentBean))
+            contentBean.setBgmDir(FileUtil.getBgmFileName(contentBean));
         insertOrReplaceContent(contentBean);
         LogUtil.w("ceshi", "这个新数据插在了队伍的" + loadAllValidInformation().indexOf(contentBean) + "处");
         LogUtil.w("ceshi", loadAllValidInformation().size() + "  " + SharedPreferencesUtil.getInformationId());
@@ -1050,8 +1088,8 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             nextInformation(true);
         }
 
-        String[] imgUrl = contentBean.getResourcesUrl().replaceAll(" ", "").split(",");
-        for (int i = 0; i < imgUrl.length; i++) {
+        String[] contentList = contentBean.getResourcesUrl().replaceAll(" ", "").split(",");
+        for (int i = 0; i < contentList.length; i++) {
             DownLoadFileManager.getInstance().addDownloadTask(i, contentBean);
         }
         //下载背景音乐
@@ -1162,7 +1200,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    info_tv.setText("设备Id:" + eqId + " 正在播的Id:" + contentBean.getId() + "当前音量：" + ControlVolumeUtil.getVoice());
+//                    info_tv.setText("总数" + loadAllValidInformation().size() + "Id:" + eqId + " 正在播的Id:" + contentBean.getId() + "音量：" + ControlVolumeUtil.getVoice() + contentBean.getHeadline());
                 }
             });
             contentBean.setSpots(0);
@@ -1177,7 +1215,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                     beginTransaction(true, imgFragment, contentBean);
                     break;
                 //是视频
-                case Constants.IS_MOVIE:
+                case Constants.IS_VIDEO:
                     //要隐藏标题
                     setLogoAndTitle(false, contentBean.getHeadline());
                     videoFragment = new VideoFragment();
@@ -1226,23 +1264,29 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     }
 
     private void stopVoiceAndVideo() {
-        if (videoFragment != null) {
-            VideoView videoView = videoFragment.getVideoView();
-            if (videoView != null && videoView.isPlaying()) {
-                videoView.pause();
-                videoView.stopPlayback();
-            }
-        }
-        if (getSpeechSynthesizer() != null) {
-            mSpeechSynthesizer.stop();
-        }
         try {
+            if (videoFragment != null) {
+                VideoView videoView = videoFragment.getVideoView();
+                if (videoView != null && videoView.isPlaying()) {
+                    videoView.pause();
+                    videoView.stopPlayback();
+                }
+            }
+            if (getSpeechSynthesizer() != null) {
+                mSpeechSynthesizer.stop();
+            }
+
             if (mediaPlayer != null) {
                 mediaPlayer.stop();
                 mediaPlayer.release();
+                mediaPlayer = null;
             }
         } catch (IllegalStateException e) {
-
+            mediaPlayer = null;
+            mediaPlayer = new MediaPlayer();
+            mediaPlayer.stop();
+            mediaPlayer.release();
+            mediaPlayer = null;
         }
     }
 
@@ -1270,10 +1314,19 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     }
 
     public MediaPlayer getMediaPlayer() {
-//        if (mediaPlayer != null && mediaPlayer.isPlaying()) {
-//            mediaPlayer.stop();
-//            mediaPlayer.release();
-//        }
+        try {
+            if (mediaPlayer != null) {
+                mediaPlayer.stop();
+                mediaPlayer.release();
+                mediaPlayer = null;
+            }
+        } catch (IllegalStateException e) {
+            mediaPlayer = null;
+            mediaPlayer = new MediaPlayer();
+            mediaPlayer.stop();
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
         mediaPlayer = new MediaPlayer();
         return mediaPlayer;
     }
@@ -1294,6 +1347,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             if (mediaPlayer != null) {
                 mediaPlayer.stop();
                 mediaPlayer.release();
+                mediaPlayer = null;
             }
         } catch (IllegalStateException e) {
 

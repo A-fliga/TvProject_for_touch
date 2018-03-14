@@ -1,20 +1,18 @@
 package com.app.tvproject.mvp.presenter.fragment;
 
-import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.view.View;
 
 import com.app.tvproject.constants.Constants;
 import com.app.tvproject.mvp.model.data.ContentBean;
 import com.app.tvproject.mvp.presenter.activity.MainActivity;
 import com.app.tvproject.mvp.view.ImgWithTextDelegate;
 import com.app.tvproject.utils.BaiduVoiceUtil;
+import com.app.tvproject.utils.FileUtil;
 import com.app.tvproject.utils.LogUtil;
 import com.app.tvproject.utils.NetUtil;
 import com.baidu.tts.client.SpeechSynthesizer;
-import com.bigkoo.convenientbanner.listener.OnItemClickListener;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -61,51 +59,73 @@ public class ImgWithTextFragment extends FragmentPresenter<ImgWithTextDelegate> 
         }
         //如果不需要转语音，且有背景音乐，就去播放背景音乐
         else if (contentBean.getBgm() != null && !contentBean.getBgm().isEmpty()) {
-            if (contentBean.getSpots() == Constants.IS_SPOTS)
+            if (contentBean.getSpots() == Constants.IS_SPOTS) {
+                stopMediaPlayer();
                 mediaPlayer = new MediaPlayer();
-            else {
+            } else {
                 mediaPlayer = activity.getMediaPlayer();
                 LogUtil.d("idceshi", "fragment里的id：" + mediaPlayer.toString());
             }
             try {
-//                mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-                mediaPlayer.setDataSource(contentBean.getBgm());
+//                mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);\
+                if (FileUtil.isFileExists(contentBean.getBgmDir()))
+                    mediaPlayer.setDataSource(contentBean.getBgmDir());
+                else mediaPlayer.setDataSource(contentBean.getBgm());
                 mediaPlayer.prepareAsync();
-
                 mediaPlayer.setOnPreparedListener(mp -> mediaPlayer.start());
                 mediaPlayer.setOnErrorListener((mp, what, extra) -> {
-                    mediaPlayer.stop();
-                    mediaPlayer.release();
+                    stopMediaPlayer();
                     return false;
                 });
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-
         }
 
         setBannerImgLoader(contentBean);
     }
 
 
-    public MediaPlayer getMediaPlayer() {
-        return mediaPlayer;
+    public void stopMediaPlayer() {
+        try {
+            if (mediaPlayer != null) {
+                mediaPlayer.stop();
+                mediaPlayer.release();
+                mediaPlayer = null;
+            }
+        } catch (IllegalStateException e) {
+            mediaPlayer = null;
+            mediaPlayer = new MediaPlayer();
+            mediaPlayer.stop();
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
     }
 
 
     private void setBannerImgLoader(ContentBean contentBean) {
         List<String> imgUrlList = new ArrayList<>();
         String[] imgUrl = contentBean.getResourcesUrl().replaceAll(" ", "").split(",");
-        for (String anImgUrl : imgUrl) {
-            if (!NetUtil.isConnectNoToast()) {
-                if (!(anImgUrl.replaceAll(" ", "").substring(0, 4).equals("http")) && !anImgUrl.isEmpty()) {
-                    imgUrlList.add(anImgUrl);
-                }
+        String[] localUrl = contentBean.getResourcesDir().split(",");
+//        for (String anImgUrl : imgUrl) {
+//            if (!NetUtil.isConnectNoToast()) {
+//                if (!(anImgUrl.replaceAll(" ", "").substring(0, 4).equals("http")) && !anImgUrl.isEmpty()) {
+//                    imgUrlList.add(anImgUrl);
+//                }
+//            } else {
+//                if (!anImgUrl.isEmpty()) {
+//                    imgUrlList.add(anImgUrl);
+//                }
+//            }
+//        }
+        //无网情况只拿本地数据，有网优先拿本地，没有再拿网络
+        for (int i = 0; i < localUrl.length; i++) {
+            if (!NetUtil.isConnectNoToast() && FileUtil.isFileExists(localUrl[i])) {
+                imgUrlList.add(localUrl[i]);
             } else {
-                if (!anImgUrl.isEmpty()) {
-                    imgUrlList.add(anImgUrl);
-                }
+                if (FileUtil.isFileExists(localUrl[i])) {
+                    imgUrlList.add(localUrl[i]);
+                } else imgUrlList.add(imgUrl[i]);
             }
         }
         viewDelegate.showImgBanner(imgUrlList);
@@ -129,13 +149,6 @@ public class ImgWithTextFragment extends FragmentPresenter<ImgWithTextDelegate> 
         if (speechSynthesizer != null) {
             speechSynthesizer.stop();
         }
-        try {
-            if (mediaPlayer != null && mediaPlayer.isPlaying()) {
-                mediaPlayer.stop();
-                mediaPlayer.release();
-            }
-        } catch (IllegalStateException e) {
-
-        }
+        stopMediaPlayer();
     }
 }

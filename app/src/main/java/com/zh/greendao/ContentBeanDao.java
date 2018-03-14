@@ -52,6 +52,8 @@ public class ContentBeanDao extends AbstractDao<ContentBean, Long> {
         public final static Property TagName = new Property(25, String.class, "tagName", false, "TAG_NAME");
         public final static Property Spots = new Property(26, int.class, "spots", false, "SPOTS");
         public final static Property Bgm = new Property(27, String.class, "bgm", false, "BGM");
+        public final static Property ResourcesDir = new Property(28, String.class, "resourcesDir", false, "RESOURCES_DIR");
+        public final static Property BgmDir = new Property(29, String.class, "bgmDir", false, "BGM_DIR");
     }
 
 
@@ -94,7 +96,9 @@ public class ContentBeanDao extends AbstractDao<ContentBean, Long> {
                 "\"DELSTATUS\" INTEGER NOT NULL ," + // 24: delstatus
                 "\"TAG_NAME\" TEXT," + // 25: tagName
                 "\"SPOTS\" INTEGER NOT NULL ," + // 26: spots
-                "\"BGM\" TEXT);"); // 27: bgm
+                "\"BGM\" TEXT," + // 27: bgm
+                "\"RESOURCES_DIR\" TEXT," + // 28: resourcesDir
+                "\"BGM_DIR\" TEXT);"); // 29: bgmDir
     }
 
     /** Drops the underlying database table. */
@@ -170,6 +174,16 @@ public class ContentBeanDao extends AbstractDao<ContentBean, Long> {
         if (bgm != null) {
             stmt.bindString(28, bgm);
         }
+ 
+        String resourcesDir = entity.getResourcesDir();
+        if (resourcesDir != null) {
+            stmt.bindString(29, resourcesDir);
+        }
+ 
+        String bgmDir = entity.getBgmDir();
+        if (bgmDir != null) {
+            stmt.bindString(30, bgmDir);
+        }
     }
 
     @Override
@@ -239,6 +253,16 @@ public class ContentBeanDao extends AbstractDao<ContentBean, Long> {
         if (bgm != null) {
             stmt.bindString(28, bgm);
         }
+ 
+        String resourcesDir = entity.getResourcesDir();
+        if (resourcesDir != null) {
+            stmt.bindString(29, resourcesDir);
+        }
+ 
+        String bgmDir = entity.getBgmDir();
+        if (bgmDir != null) {
+            stmt.bindString(30, bgmDir);
+        }
     }
 
     @Override
@@ -276,7 +300,9 @@ public class ContentBeanDao extends AbstractDao<ContentBean, Long> {
             cursor.getInt(offset + 24), // delstatus
             cursor.isNull(offset + 25) ? null : cursor.getString(offset + 25), // tagName
             cursor.getInt(offset + 26), // spots
-            cursor.isNull(offset + 27) ? null : cursor.getString(offset + 27) // bgm
+            cursor.isNull(offset + 27) ? null : cursor.getString(offset + 27), // bgm
+            cursor.isNull(offset + 28) ? null : cursor.getString(offset + 28), // resourcesDir
+            cursor.isNull(offset + 29) ? null : cursor.getString(offset + 29) // bgmDir
         );
         return entity;
     }
@@ -311,6 +337,8 @@ public class ContentBeanDao extends AbstractDao<ContentBean, Long> {
         entity.setTagName(cursor.isNull(offset + 25) ? null : cursor.getString(offset + 25));
         entity.setSpots(cursor.getInt(offset + 26));
         entity.setBgm(cursor.isNull(offset + 27) ? null : cursor.getString(offset + 27));
+        entity.setResourcesDir(cursor.isNull(offset + 28) ? null : cursor.getString(offset + 28));
+        entity.setBgmDir(cursor.isNull(offset + 29) ? null : cursor.getString(offset + 29));
      }
     
     @Override

@@ -10,53 +10,53 @@ import com.app.tvproject.BuildConfig;
  * Created by www on 3/16/17.
  */
 public final class LogUtil {
-
+    public static boolean isDebug = false;
     private static final String TAG = "CLOUD";
 
     public static void d(String debug) {
-        if (BuildConfig.DEBUG) {
+        if (isDebug) {
             Log.d(TAG, getMethodInfo() + debug);
         }
     }
 
     public static void d(String pTAG, String debug) {
-        if (BuildConfig.DEBUG) {
+        if (isDebug) {
             Log.d(pTAG, debug);
         }
     }
 
     public static void i(String info) {
-        if (BuildConfig.DEBUG) {
+        if (isDebug) {
             Log.i(TAG, getMethodInfo() + info);
         }
     }
 
     public static void i(String pTAG, String info) {
-        if (BuildConfig.DEBUG) {
+        if (isDebug) {
             Log.i(pTAG, getMethodInfo() + info);
         }
     }
 
     public static void w(String info) {
-        if (BuildConfig.DEBUG) {
+        if (isDebug) {
             Log.w(TAG, getMethodInfo() + info);
         }
     }
 
     public static void w(String pTAG, String info) {
-        if (BuildConfig.DEBUG) {
+        if (isDebug) {
             Log.w(pTAG, getMethodInfo() + info);
         }
     }
 
     public static void e(String error) {
-        if (BuildConfig.DEBUG) {
+        if (isDebug) {
             Log.e(TAG, getMethodInfo() + error);
         }
     }
 
     public static void e(String pTAG, String error) {
-        if (BuildConfig.DEBUG) {
+        if (isDebug) {
             Log.e(pTAG, getMethodInfo() + error);
         }
     }

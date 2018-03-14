@@ -17,13 +17,14 @@ import java.util.List;
  */
 
 public class InfoListAdapter extends RecyclerView.Adapter<InfoListAdapter.InfoListViewHolder> {
-
+    private Boolean isInfo;
     private Context context;
     private List<ContentBean> beanList;
 
-    public InfoListAdapter(Context context, List<ContentBean> beanList) {
+    public InfoListAdapter(Context context, List<ContentBean> beanList, Boolean isInfo) {
         this.context = context;
         this.beanList = beanList;
+        this.isInfo = isInfo;
     }
 
     @Override
@@ -34,7 +35,9 @@ public class InfoListAdapter extends RecyclerView.Adapter<InfoListAdapter.InfoLi
     @Override
     public void onBindViewHolder(InfoListViewHolder holder, int position) {
         ContentBean bean = beanList.get(position);
-        holder.tv.setText("资讯id:" + bean.getId() + "标题：" + bean.getHeadline());
+        if (isInfo)
+            holder.tv.setText("id:" + bean.getId() + "标题：" + bean.getHeadline().replaceAll(" ", ""));
+        else holder.tv.setText("id:" + bean.getId() + bean.getContent().replaceAll(" ", ""));
     }
 
     @Override

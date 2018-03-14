@@ -52,7 +52,7 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
     //设备Id
     private long eqId = -1;
 
-    private int countDownTime = 10000, hideUiTime = 4000;
+    private int countDownTime = 30000, hideUiTime = 4000;
     private Boolean isFirstStart = true, toMainActivity = false;
     //做定时任务用
     private Timer timer = new Timer();
@@ -243,6 +243,7 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
             public void onError(Throwable e) {
                 ToastUtil.l("获取设备信息错误，请重启");
                 hideUI(false);
+                finish();
             }
 
             @Override
@@ -325,6 +326,7 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
     @Override
     protected void onDestroy() {
         LogUtil.d("zhouqi", "onDestroy");
+        hideUI(false);
         super.onDestroy();
         if (task != null) {
             task.cancel();

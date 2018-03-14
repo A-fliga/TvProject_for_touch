@@ -68,6 +68,20 @@ public class ContentBean implements Parcelable {
     private String tagName;
     private int spots;
     private String bgm;
+    private String resourcesDir;
+    private String bgmDir;
+
+    public static final Creator<ContentBean> CREATOR = new Creator<ContentBean>() {
+        @Override
+        public ContentBean createFromParcel(Parcel in) {
+            return new ContentBean(in);
+        }
+
+        @Override
+        public ContentBean[] newArray(int size) {
+            return new ContentBean[size];
+        }
+    };
 
     public long getId() {
         return this.id;
@@ -330,6 +344,22 @@ public class ContentBean implements Parcelable {
         this.bgm = bgm;
     }
 
+    public String getResourcesDir() {
+        return this.resourcesDir;
+    }
+
+    public void setResourcesDir(String resourcesDir) {
+        this.resourcesDir = resourcesDir;
+    }
+
+    public String getBgmDir() {
+        return this.bgmDir;
+    }
+
+    public void setBgmDir(String bgmDir) {
+        this.bgmDir = bgmDir;
+    }
+
     protected ContentBean(Parcel in) {
         this.id = in.readLong();
         this.publishTypeId = in.readInt();
@@ -360,7 +390,7 @@ public class ContentBean implements Parcelable {
         this.spots = in.readInt();
     }
 
-    @Generated(hash = 1089862505)
+    @Generated(hash = 1392077542)
     public ContentBean(long id, int publishTypeId, int publishTagId,
             String publisher, int duration, String headline, long starttime,
             long endtime, String content, String resourcesUrl, int imgormo,
@@ -368,7 +398,7 @@ public class ContentBean implements Parcelable {
             long updateTime, String playTime, int playCount, int belongto,
             int belongtoId, int status, long sort, int audiencebelongto,
             int audiencebelongtoId, int delstatus, String tagName, int spots,
-            String bgm) {
+            String bgm, String resourcesDir, String bgmDir) {
         this.id = id;
         this.publishTypeId = publishTypeId;
         this.publishTagId = publishTagId;
@@ -397,23 +427,12 @@ public class ContentBean implements Parcelable {
         this.tagName = tagName;
         this.spots = spots;
         this.bgm = bgm;
+        this.resourcesDir = resourcesDir;
+        this.bgmDir = bgmDir;
     }
 
     @Generated(hash = 1643641106)
     public ContentBean() {
     }
-
-
-    public static final Creator<ContentBean> CREATOR = new Creator<ContentBean>() {
-        @Override
-        public ContentBean createFromParcel(Parcel source) {
-            return new ContentBean(source);
-        }
-
-        @Override
-        public ContentBean[] newArray(int size) {
-            return new ContentBean[size];
-        }
-    };
 }
 

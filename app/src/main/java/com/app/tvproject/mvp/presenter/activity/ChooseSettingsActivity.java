@@ -91,9 +91,9 @@ public class ChooseSettingsActivity extends ActivityPresenter<ChooseSettingsActi
         long id = resultBean.id;
         String alias;
 ////        if (BuildConfig.DEBUG) {
-        alias = "CS_touchid" + id;
+//        alias = "CS_touchid" + id;
 ////        } else {
-//        alias = Constants.JPUSH_NAME + id;
+        alias = Constants.JPUSH_NAME + id;
 //        }
         //设置极光别名
         MyApplication.getAppContext().setAlisa(alias);
