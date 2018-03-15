@@ -65,6 +65,8 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
 
     private int villageId;
 
+    private Boolean isStop = false;
+
     @Override
     public Class<TouchScreenActivityDelegate> getDelegateClass() {
         return TouchScreenActivityDelegate.class;
@@ -74,7 +76,7 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        viewDelegate.hideMainLL(true);
+//        viewDelegate.hideMainLL(true);
 //        try {
 //            Runtime.getRuntime().exec("su");
         viewDelegate.get(R.id.webView_rl).setOnClickListener(v -> {
@@ -123,20 +125,23 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
                 @Override
                 public void onError(Throwable e) {
                     hideUI(false);
-                    initWebView();
+                    if (!isStop)
+                        initWebView();
                 }
 
                 @Override
                 public void onNext(BaseEntity<UpdateBean> updateBeanBaseEntity) {
-                    if (updateBeanBaseEntity.getResult() != null && Float.parseFloat(AppUtil.getVersionName()) < Float.parseFloat(updateBeanBaseEntity.getResult().versionNumber)) {
-                        //开始下载更新并安装
-                        LogUtil.d("qidong", "更新");
-                        new Thread(() -> {
-                            Looper.prepare();
-                            startUpdate(updateBeanBaseEntity.getResult().resourceUrl);
-                        }).start();
-                    } else {
-                        initWebView();
+                    if (!isStop) {
+                        if (updateBeanBaseEntity.getResult() != null && Float.parseFloat(AppUtil.getVersionName()) < Float.parseFloat(updateBeanBaseEntity.getResult().versionNumber)) {
+                            //开始下载更新并安装
+                            LogUtil.d("qidong", "更新");
+                            new Thread(() -> {
+                                Looper.prepare();
+                                startUpdate(updateBeanBaseEntity.getResult().resourceUrl);
+                            }).start();
+                        } else {
+                            initWebView();
+                        }
                     }
                 }
             });
@@ -186,6 +191,12 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
     }
 
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        isStop = true;
+    }
+
     private void hideUI(Boolean disable) {
         Intent i;
         if (disable)
@@ -196,7 +207,11 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
     }
 
     private void initWebView() {
-        viewDelegate.hideMainLL(false);
+//        try {
+//            if (viewDelegate != null)
+//                viewDelegate.hideMainLL(false);
+//        } catch (NullPointerException e) {
+//        }
         webView = viewDelegate.get(R.id.webView);
 
         WebSettings webSettings = webView.getSettings();

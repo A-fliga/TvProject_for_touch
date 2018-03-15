@@ -159,12 +159,13 @@ public class MainActivityDelegate extends ViewDelegate {
     //设置logo下方内容标签
     public void setTagContent(String content) {
         getActivity().runOnUiThread(() -> {
-            if (content != null) {
-                tv_tag.setText(content);
-                if (content.replaceAll(" ", "").isEmpty())
-                    tv_tag.setVisibility(View.GONE);
-                else tv_tag.setVisibility(View.VISIBLE);
-            } else tv_tag.setText("");
+//            if (content != null) {
+//                tv_tag.setText(content);
+//                if (content.replaceAll(" ", "").isEmpty())
+//                    tv_tag.setVisibility(View.GONE);
+//                else tv_tag.setVisibility(View.VISIBLE);
+//            } else tv_tag.setText("");
+            tv_tag.setText("");
         });
     }
 

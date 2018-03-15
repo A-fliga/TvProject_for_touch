@@ -25,6 +25,7 @@ import android.view.Menu;
 import com.app.tvproject.R;
 import com.app.tvproject.mvp.presenter.IPresenter;
 import com.app.tvproject.mvp.view.ViewDelegate;
+import com.app.tvproject.utils.LogUtil;
 
 import java.io.Serializable;
 import java.util.Stack;
@@ -37,7 +38,7 @@ import java.util.Stack;
  * @param <T> View delegate class type
  */
 public abstract class ActivityPresenter<T extends ViewDelegate> extends AppCompatActivity implements IPresenter<T> {
-    protected T viewDelegate;
+    protected volatile T viewDelegate;
     private static Stack<Activity> activityStack;
 
     public ActivityPresenter() {
