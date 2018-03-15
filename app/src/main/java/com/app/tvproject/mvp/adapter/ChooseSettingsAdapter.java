@@ -40,7 +40,7 @@ public class ChooseSettingsAdapter extends RecyclerView.Adapter<ChooseSettingsAd
     public void onBindViewHolder(ChooseSettingViewHolder holder, int position) {
         ChooseSettingsBean.ResultBean settingBean = beanList.get(position);
         holder.chooseItemTv.setText((settingBean.names == null || settingBean.names.isEmpty()) ?
-                settingBean.equipmentnumber : settingBean.names);
+                settingBean.equipmentnumber + "  " + settingBean.address : settingBean.names);
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
