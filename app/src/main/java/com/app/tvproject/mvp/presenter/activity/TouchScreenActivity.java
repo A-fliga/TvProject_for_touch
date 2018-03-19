@@ -7,8 +7,11 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -52,12 +55,14 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
     //设备Id
     private long eqId = -1;
 
-    private int countDownTime = 30000, hideUiTime = 4000;
-    private Boolean isFirstStart = true, toMainActivity = false;
+    private int countDownTime = 5000, hideUiTime = 4000;
+    private Boolean isFirstStart = true, toMainActivity = false, noConnect = false;
     //做定时任务用
     private Timer timer = new Timer();
 
-    private static final String WEB_URL = "http://119.23.235.164:8083/wzt?villageId=";
+    private static final String WEB_URL = "https://www.wllzpt.com/wzt?villageId=";
+
+    private String error_url;
     //做倒计时跳转用
     private TimerTask task, hideUiTask;
 
@@ -126,7 +131,7 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
                 public void onError(Throwable e) {
                     hideUI(false);
                     if (!isStop)
-                        initWebView();
+                        initWebView(null);
                 }
 
                 @Override
@@ -140,13 +145,13 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
                                 startUpdate(updateBeanBaseEntity.getResult().resourceUrl);
                             }).start();
                         } else {
-                            initWebView();
+                            initWebView(null);
                         }
                     }
                 }
             });
         } else {
-            initWebView();
+            initWebView(null);
         }
     }
 
@@ -175,11 +180,11 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
         if (DownLoadFileManager.getInstance().downLoadApk(pd, apkUrl) && DownLoadFileManager.getInstance().getApkPath() != null) {
             closeDialog(pd);
             if (PackageUtils.install(this, DownLoadFileManager.getInstance().getApkPath()) != INSTALL_SUCCEEDED) {
-                initWebView();
+                initWebView(null);
             }
         } else {
             closeDialog(pd);
-            initWebView();
+            initWebView(null);
         }
     }
 
@@ -206,7 +211,7 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
         sendBroadcast(i);
     }
 
-    private void initWebView() {
+    private void initWebView(String url) {
 //        try {
 //            if (viewDelegate != null)
 //                viewDelegate.hideMainLL(false);
@@ -237,13 +242,16 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
 //            webView.setWebContentsDebuggingEnabled(true);
 //        }
-        webView.loadUrl(WEB_URL + villageId);
+        if (url == null || url.isEmpty()) {
+            webView.loadUrl(WEB_URL + villageId);
+
+            getEqInfo();
+            startUpdateStates();
+            //界面没操作多久后要自动跳到显示屏界面
+            startCountDown(countDownTime);
+            setTouchListener();
+        } else webView.loadUrl(url);
         webView.setWebViewClient(new webViewClient());
-        getEqInfo();
-        startUpdateStates();
-        //界面没操作多久后要自动跳到显示屏界面
-        startCountDown(countDownTime);
-        setTouchListener();
     }
 
 
@@ -257,8 +265,8 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
             @Override
             public void onError(Throwable e) {
                 ToastUtil.l("获取设备信息错误，请重启");
-                hideUI(false);
-                finish();
+//                hideUI(false);
+//                finish();
             }
 
             @Override
@@ -280,6 +288,13 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
             super.onPageFinished(view, url);
             isFirstStart = false;
             ProgressDialogUtil.instance().stopLoad();
+        }
+
+        @Override
+        public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+            super.onReceivedError(view, errorCode, description, failingUrl);
+            noConnect = true;
+            error_url = failingUrl;
         }
     }
 
@@ -372,8 +387,11 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
         super.onResume();
         toMainActivity = false;
         autoHideUi(hideUiTime);
-        if (!isFirstStart) {
+        if (!isFirstStart)
             startCountDown(countDownTime);
+        if (noConnect) {
+            noConnect = false;
+            initWebView(error_url);
         }
         //注册eventBus
         EventBus.getDefault().register(this);
@@ -406,6 +424,7 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == Constants.CHOOSE_SETTINGS_REQUEST_CODE && resultCode == Constants.CHOOSE_SETTINGS_RESULT_CODE) {
+            isStop = false;
             setEquipUsed(data, 1);
 
         } else finish();

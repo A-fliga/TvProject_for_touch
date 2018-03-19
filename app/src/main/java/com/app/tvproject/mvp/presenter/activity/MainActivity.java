@@ -122,6 +122,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         DownLoadFileManager.getInstance().stopDownLoad(false);
         Bundle bundle = getIntent().getExtras();
         info_tv = (TextView) findViewById(R.id.info_tv);
+        timer = new Timer();
         if (viewDelegate != null) {
             recyclerView = viewDelegate.get(R.id.info_list_recycler);
             notice_list_recycler = viewDelegate.get(R.id.notice_list_recycler);
@@ -194,7 +195,6 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
 
     private void initServiceData() {
         initData(false);
-        timer = new Timer();
         finishActivityTask = new TimerTask() {
             @Override
             public void run() {
@@ -641,8 +641,8 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                         //停播的是资讯
                         case Constants.PUBLISH_TYPE_INFORMATION:
                         case Constants.PUBLISH_TYPE_ADVERT:
-//                            beanList.remove(contentBean);
-//                            adapter.notifyDataSetChanged();
+                            beanList.remove(contentBean);
+                            adapter.notifyDataSetChanged();
                             DownLoadFileManager.getInstance().setStopId(contentId);
                             stopInformation(contentId, contentBean);
                             DownLoadFileManager.getInstance().setStopId(-1);
@@ -785,8 +785,8 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             public void onNext(BaseEntity<ContentBean> contentBeanBaseEntity) {
                 beanList.add(contentBeanBaseEntity.getResult());
                 if (adapter != null)
-//                    adapter.notifyDataSetChanged();
-                    startShowContent(contentBeanBaseEntity.getResult());
+                    adapter.notifyDataSetChanged();
+                startShowContent(contentBeanBaseEntity.getResult());
             }
         }, String.valueOf(contentId), String.valueOf(eqId));
     }
@@ -1032,8 +1032,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     private void beginInterCutTransaction(Boolean isImg, Fragment fragment, ContentBean contentBean) {
         Bundle bundle = new Bundle();
         bundle.putParcelable("contentBean", contentBean);
-        if (!isImg)
-            bundle.putBoolean("Spots", true);
+        bundle.putBoolean("Spots", true);
         FragmentManager manager = getSupportFragmentManager();
         FragmentTransaction transaction = manager.beginTransaction();
         fragment.setArguments(bundle);
@@ -1392,6 +1391,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         toDestroy();
         //退出app停止下载
         DownLoadFileManager.getInstance().stopDownLoad(true);
+        NetBroadCastReceiver.setNetChangeListener(null);
         //退出应用后解绑eventBus
         EventBus.getDefault().unregister(this);
         //关闭数据库
@@ -1428,14 +1428,31 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             finishActivityTask.cancel();
             finishActivityTask = null;
         }
+        if (netTask != null) {
+            netTask.cancel();
+            netTask = null;
+        }
     }
+
+    private TimerTask netTask;
 
     @Override
     public void netChange(Boolean isConnect) {
+        if (netTask != null) {
+            netTask.cancel();
+            netTask = null;
+        }
         if (isConnect) {
-            stopVoiceAndVideo();
-            stopTask();
-            getPublishList(false, false);
+            netTask = new TimerTask() {
+                @Override
+                public void run() {
+                    stopVoiceAndVideo();
+                    stopTask();
+                    getPublishList(false, false);
+                }
+            };
+            timer.schedule(netTask, 2000);
+
         }
     }
 }

@@ -131,8 +131,6 @@ public class VideoFragment extends FragmentPresenter<VideoFragmentDelegate> {
                     activity.setTaskNull(true);
                 }
             }
-
-
             activity.nextInformation(false);
             return true;
         }

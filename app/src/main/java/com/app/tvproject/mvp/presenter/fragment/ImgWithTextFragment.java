@@ -127,10 +127,19 @@ public class ImgWithTextFragment extends FragmentPresenter<ImgWithTextDelegate> 
             } else {
                 if (FileUtil.isFileExists(localUrl[i])) {
                     imgUrlList.add(localUrl[i]);
-                } else imgUrlList.add(imgUrl[i]);
+                } else if (NetUtil.isConnectNoToast()) imgUrlList.add(imgUrl[i]);
             }
         }
-        viewDelegate.showImgBanner(imgUrlList);
+        if (imgUrlList.size() != 0)
+            viewDelegate.showImgBanner(imgUrlList);
+        else {
+            MainActivity activity = (MainActivity) getActivity();
+            if (activity.getInformationTask() != null) {
+                activity.getInformationTask().cancel();
+                activity.setTaskNull(false);
+            }
+            activity.nextInformation(false);
+        }
         viewDelegate.getConvenientBanner().setOnItemClickListener(position -> getActivity().finish());
     }
 
@@ -145,21 +154,15 @@ public class ImgWithTextFragment extends FragmentPresenter<ImgWithTextDelegate> 
     }
 
     @Override
-    public void onDetach()
-    {
+    public void onDetach() {
         super.onDetach();
-        try
-        {
+        try {
             Field childFragmentManager = Fragment.class.getDeclaredField("mChildFragmentManager");
             childFragmentManager.setAccessible(true);
             childFragmentManager.set(this, null);
-        }
-        catch (NoSuchFieldException e)
-        {
+        } catch (NoSuchFieldException e) {
             throw new RuntimeException(e);
-        }
-        catch (IllegalAccessException e)
-        {
+        } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
     }

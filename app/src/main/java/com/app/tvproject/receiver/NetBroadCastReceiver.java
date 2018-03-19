@@ -4,7 +4,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
+import android.net.wifi.WifiManager;
 
+import com.app.tvproject.utils.LogUtil;
 import com.app.tvproject.utils.NetUtil;
 
 /**
@@ -19,8 +21,9 @@ public class NetBroadCastReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (intent.getAction().equals(ConnectivityManager.CONNECTIVITY_ACTION)) {
             Boolean isConnect = NetUtil.isConnectNoToast();
-            if(listener != null)
+            if (listener != null && isConnect) {
                 listener.netChange(isConnect);
+            }
         }
     }
 
