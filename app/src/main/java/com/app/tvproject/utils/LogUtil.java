@@ -10,7 +10,7 @@ import com.app.tvproject.BuildConfig;
  * Created by www on 3/16/17.
  */
 public final class LogUtil {
-    public static boolean isDebug = true;
+    private static boolean isDebug = false;
     private static final String TAG = "CLOUD";
 
     public static void d(String debug) {

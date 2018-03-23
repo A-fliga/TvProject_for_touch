@@ -90,7 +90,7 @@ public class ImgWithTextFragment extends FragmentPresenter<ImgWithTextDelegate> 
 
     public void stopMediaPlayer() {
         try {
-            if (mediaPlayer != null) {
+            if (mediaPlayer != null && mediaPlayer.isPlaying()) {
                 mediaPlayer.stop();
                 mediaPlayer.release();
                 mediaPlayer = null;

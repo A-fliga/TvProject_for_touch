@@ -16,6 +16,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import com.app.tvproject.BuildConfig;
 import com.app.tvproject.R;
 import com.app.tvproject.constants.Constants;
 import com.app.tvproject.mvp.model.PublicModel;
@@ -55,12 +56,12 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
     //设备Id
     private long eqId = -1;
 
-    private int countDownTime = 5000, hideUiTime = 4000;
+    private int countDownTime = 30000, hideUiTime = 4000;
     private Boolean isFirstStart = true, toMainActivity = false, noConnect = false;
     //做定时任务用
     private Timer timer = new Timer();
 
-    private static final String WEB_URL = "https://www.wllzpt.com/wzt?villageId=";
+    private static final String WEB_URL = BuildConfig.HOST + "/wzt?villageId=";
 
     private String error_url;
     //做倒计时跳转用
@@ -196,12 +197,6 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
     }
 
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        isStop = true;
-    }
-
     private void hideUI(Boolean disable) {
         Intent i;
         if (disable)
@@ -265,8 +260,8 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
             @Override
             public void onError(Throwable e) {
                 ToastUtil.l("获取设备信息错误，请重启");
-//                hideUI(false);
-//                finish();
+                hideUI(false);
+                finish();
             }
 
             @Override
@@ -355,6 +350,7 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
 
     @Override
     protected void onDestroy() {
+        isStop = true;
         LogUtil.d("zhouqi", "onDestroy");
         hideUI(false);
         super.onDestroy();
@@ -410,15 +406,15 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
         EventBus.getDefault().unregister(this);
     }
 
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if ((keyCode == KeyEvent.KEYCODE_BACK) && webView != null && webView.canGoBack()) {
-            webView.goBack(); //goBack()表示返回WebView的上一页面
-            return true;
-        }
-        finish();//结束退出程序
-        return false;
-    }
+//    @Override
+//    public boolean onKeyDown(int keyCode, KeyEvent event) {
+//        if ((keyCode == KeyEvent.KEYCODE_BACK) && webView != null && webView.canGoBack()) {
+//            webView.goBack(); //goBack()表示返回WebView的上一页面
+//            return true;
+//        }
+//        finish();//结束退出程序
+//        return false;
+//    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {

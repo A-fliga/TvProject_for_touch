@@ -108,6 +108,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     private List<ContentBean> beanList = new ArrayList<>();
     private List<ContentBean> noticeList = new ArrayList<>();
     private InfoListAdapter adapter, adapter2;
+    private Button nextInfoBtn;
 
     @Override
     public Class<MainActivityDelegate> getDelegateClass() {
@@ -121,15 +122,31 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         hideUI(true);
         DownLoadFileManager.getInstance().stopDownLoad(false);
         Bundle bundle = getIntent().getExtras();
-        info_tv = (TextView) findViewById(R.id.info_tv);
+
         timer = new Timer();
-        if (viewDelegate != null) {
+        if (viewDelegate != null) { //这些测试用的
+            nextInfoBtn = (Button) findViewById(R.id.nextInfoBtn);
+            info_tv = (TextView) findViewById(R.id.info_tv);
             recyclerView = viewDelegate.get(R.id.info_list_recycler);
             notice_list_recycler = viewDelegate.get(R.id.notice_list_recycler);
+            nextInfoBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (getInformationTask() != null) {
+                        getInformationTask().cancel();
+                        setTaskNull(false);
+                    }
+                    if (getInterCutInfoTask() != null) {
+                        getInterCutInfoTask().cancel();
+                        setTaskNull(true);
+                    }
+                    nextInformation(false);
+                }
+            });
         }
         if (bundle != null) {
             eqId = bundle.getLong("eqId", -1);
-//            info_tv.setText("当前设备：" + eqId);
+            info_tv.setText("当前设备：" + eqId);
             //删除下载的临时数据
             DownLoadFileManager.getInstance().deleteTempData();
             //初始化服务器数据
@@ -491,6 +508,11 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
 //                    DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getBgm());
 //            }
             deleteDataAndShared(false, clearShared);
+            List<ContentBean> testList = new ArrayList<>();
+            for (int i = 0; i < resultList.size(); i++) {
+                if (FileUtil.getFileSuffix(resultList.get(i).getResourcesUrl()).equals(".mp4"))
+                    testList.add(resultList.get(i));
+            }
             insertOrReplaceList(resultList);
             insertOrReplaceList(noticeList);
             if (!isStop && viewDelegate != null) {
@@ -598,7 +620,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         switch (action) {
             //处理内容信息
             case "pushNotice":
-//                info_tv.setText("设备Id:" + eqId + " 收到的内容Id:" + contentId);
+                info_tv.setText("设备Id:" + eqId + " 收到的内容Id:" + contentId);
                 getPublishContent(contentId);
                 break;
             //处理设备信息
@@ -1220,7 +1242,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-//                    info_tv.setText("总数" + loadAllValidInformation().size() + "Id:" + eqId + " 正在播的Id:" + contentBean.getId() + "音量：" + ControlVolumeUtil.getVoice() + contentBean.getHeadline());
+                    info_tv.setText("总数" + loadAllValidInformation().size() + "Id:" + eqId + " 正在播的Id:" + contentBean.getId() + "音量：" + ControlVolumeUtil.getVoice() + contentBean.getHeadline());
                 }
             });
             contentBean.setSpots(0);
@@ -1379,15 +1401,9 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         }
     }
 
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        isStop = true;
-    }
-
     @Override
     protected void onDestroy() {
+        isStop = true;
         toDestroy();
         //退出app停止下载
         DownLoadFileManager.getInstance().stopDownLoad(true);
