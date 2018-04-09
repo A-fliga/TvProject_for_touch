@@ -120,12 +120,14 @@ public class VideoFragment extends FragmentPresenter<VideoFragmentDelegate> {
             MainActivity activity = (MainActivity) getActivity();
             if (!isSpots) {
                 videoView.stopPlayback();
+                videoView = null;
                 if (activity.getInformationTask() != null) {
                     activity.getInformationTask().cancel();
                     activity.setTaskNull(false);
                 }
             } else {
                 cut_videoView.stopPlayback();
+                cut_videoView = null;
                 if (activity.getInterCutInfoTask() != null) {
                     activity.getInterCutInfoTask().cancel();
                     activity.setTaskNull(true);
@@ -151,12 +153,14 @@ public class VideoFragment extends FragmentPresenter<VideoFragmentDelegate> {
                 if (videoView != null && videoView.isPlaying()) {
                     videoView.pause();
                     videoView.stopPlayback();
+                    videoView = null;
                     LogUtil.w("xiaohui", "视频fragment被销毁");
                 }
             } else {
                 if (cut_videoView != null && cut_videoView.isPlaying()) {
                     cut_videoView.pause();
                     cut_videoView.stopPlayback();
+                    cut_videoView = null;
                     LogUtil.w("xiaohui", "视频fragment被销毁");
                 }
             }

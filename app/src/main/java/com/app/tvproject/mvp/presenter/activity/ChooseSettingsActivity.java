@@ -2,6 +2,7 @@ package com.app.tvproject.mvp.presenter.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 
 import com.app.tvproject.BuildConfig;
 import com.app.tvproject.application.MyApplication;
@@ -90,11 +91,10 @@ public class ChooseSettingsActivity extends ActivityPresenter<ChooseSettingsActi
     private void initSettings(ChooseSettingsBean.ResultBean resultBean) {
         long id = resultBean.id;
         String alias;
-////        if (BuildConfig.DEBUG) {
-        alias = "CS_touchid" + id;
-////        } else {
-//        alias = Constants.JPUSH_NAME + id;
-//        }
+        if (!BuildConfig.HOST.equals("https://www.wllzpt.com")) {
+            alias = "CS_touchid" + id;
+        } else
+            alias = Constants.JPUSH_NAME + id;
         //设置极光别名
         MyApplication.getAppContext().setAlisa(alias);
         backToMain(resultBean);

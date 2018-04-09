@@ -220,8 +220,8 @@ public class DownLoadFileManager {
      */
     private void downLoadBgm(ContentBean contentBean, String bgmUrl) {
         if (!stopDownLoad) {
-            if (bgmUrl.substring(0, 4).equals("http") && queryContentById(contentBean.getId()) != null) {
-                String fileSuffix = FileUtil.getFileSuffix(bgmUrl);
+            if (queryContentById(contentBean.getId()) != null) {
+                LogUtil.w("download", "提交bgm");
                 File fileDir = new File(downloadDir);
                 if (!fileDir.exists()) {
                     fileDir.mkdirs();

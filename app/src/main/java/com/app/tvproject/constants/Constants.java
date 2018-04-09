@@ -14,6 +14,8 @@ public final class Constants {
     //极光别名，不可修改
     public static final String JPUSH_NAME = "touchid";
 
+    public static final Boolean isDebug = false;
+
     public static final String TV_PROJECT_SHARED_NAME = "TV_PROJECT";
     public static final String CONTENT_TYPE = "application/json;charset=UTF-8";
 

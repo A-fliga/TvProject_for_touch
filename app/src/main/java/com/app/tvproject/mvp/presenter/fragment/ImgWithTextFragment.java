@@ -75,10 +75,10 @@ public class ImgWithTextFragment extends FragmentPresenter<ImgWithTextDelegate> 
                 else mediaPlayer.setDataSource(contentBean.getBgm());
                 mediaPlayer.prepareAsync();
                 mediaPlayer.setOnPreparedListener(mp -> mediaPlayer.start());
-                mediaPlayer.setOnErrorListener((mp, what, extra) -> {
-                    stopMediaPlayer();
-                    return false;
-                });
+//                mediaPlayer.setOnErrorListener((mp, what, extra) -> {
+////                    stopMediaPlayer();
+//                    return false;
+//                });
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -109,30 +109,24 @@ public class ImgWithTextFragment extends FragmentPresenter<ImgWithTextDelegate> 
         List<String> imgUrlList = new ArrayList<>();
         String[] imgUrl = contentBean.getResourcesUrl().replaceAll(" ", "").split(",");
         String[] localUrl = contentBean.getResourcesDir().split(",");
-//        for (String anImgUrl : imgUrl) {
-//            if (!NetUtil.isConnectNoToast()) {
-//                if (!(anImgUrl.replaceAll(" ", "").substring(0, 4).equals("http")) && !anImgUrl.isEmpty()) {
-//                    imgUrlList.add(anImgUrl);
-//                }
-//            } else {
-//                if (!anImgUrl.isEmpty()) {
-//                    imgUrlList.add(anImgUrl);
-//                }
-//            }
-//        }
         //无网情况只拿本地数据，有网优先拿本地，没有再拿网络
         for (int i = 0; i < localUrl.length; i++) {
             if (!NetUtil.isConnectNoToast() && FileUtil.isFileExists(localUrl[i])) {
                 imgUrlList.add(localUrl[i]);
             } else {
                 if (FileUtil.isFileExists(localUrl[i])) {
+                    LogUtil.d("bendi", "id:" + contentBean.getId() + "本地已有" + localUrl[i]);
                     imgUrlList.add(localUrl[i]);
                 } else if (NetUtil.isConnectNoToast()) imgUrlList.add(imgUrl[i]);
             }
         }
-        if (imgUrlList.size() != 0)
+        if (imgUrlList.size() != 0) {
             viewDelegate.showImgBanner(imgUrlList);
-        else {
+            for (int i = 0; i < imgUrlList.size(); i++) {
+                LogUtil.d("bendi", "轮播图：" + (i + 1) + imgUrlList.get(i));
+            }
+
+        } else {
             MainActivity activity = (MainActivity) getActivity();
             if (activity.getInformationTask() != null) {
                 activity.getInformationTask().cancel();

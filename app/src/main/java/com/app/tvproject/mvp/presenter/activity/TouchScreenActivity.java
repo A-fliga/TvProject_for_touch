@@ -18,6 +18,7 @@ import android.webkit.WebViewClient;
 
 import com.app.tvproject.BuildConfig;
 import com.app.tvproject.R;
+import com.app.tvproject.application.MyApplication;
 import com.app.tvproject.constants.Constants;
 import com.app.tvproject.mvp.model.PublicModel;
 import com.app.tvproject.mvp.model.data.BaseEntity;
@@ -56,7 +57,7 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
     //设备Id
     private long eqId = -1;
 
-    private int countDownTime = 30000, hideUiTime = 4000;
+    private int countDownTime = 10000, hideUiTime = 4000;
     private Boolean isFirstStart = true, toMainActivity = false, noConnect = false;
     //做定时任务用
     private Timer timer = new Timer();
@@ -121,6 +122,13 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
     }
 
     private void checkUpdate() {
+        String alias;
+        if (!BuildConfig.HOST.equals("https://www.wllzpt.com")) {
+            alias = "CS_touchid" + eqId;
+        } else
+            alias = Constants.JPUSH_NAME + eqId;
+        //设置极光别名
+        MyApplication.getAppContext().setAlisa(alias);
         if (NetUtil.isConnectNoToast()) {
             PublicModel.getInstance().getUpdateInfo(new Subscriber<BaseEntity<UpdateBean>>() {
                 @Override
@@ -239,36 +247,12 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
 //        }
         if (url == null || url.isEmpty()) {
             webView.loadUrl(WEB_URL + villageId);
-
-            getEqInfo();
             startUpdateStates();
             //界面没操作多久后要自动跳到显示屏界面
             startCountDown(countDownTime);
             setTouchListener();
         } else webView.loadUrl(url);
         webView.setWebViewClient(new webViewClient());
-    }
-
-
-    private void getEqInfo() {
-        PublicModel.getInstance().getEqInfo(new Subscriber<BaseEntity<EqInformationBean>>() {
-            @Override
-            public void onCompleted() {
-
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                ToastUtil.l("获取设备信息错误，请重启");
-                hideUI(false);
-                finish();
-            }
-
-            @Override
-            public void onNext(BaseEntity<EqInformationBean> eqInformationBeanBaseEntity) {
-                ControlVolumeUtil.saveVoice(eqInformationBeanBaseEntity.getResult().voice);
-            }
-        }, String.valueOf(eqId));
     }
 
     //Web视图
@@ -444,7 +428,6 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
                 public void onError(Throwable e) {
                     ToastUtil.l("出现意外错误，请重启app");
                     hideUI(false);
-                    finish();
                 }
 
                 @Override

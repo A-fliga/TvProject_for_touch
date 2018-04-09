@@ -57,7 +57,6 @@ public class MainActivityDelegate extends ViewDelegate {
     }
 
     private class ClockRun implements Runnable {
-
         @Override
         public void run() {
             String clock = InitDateUtil.initClock(clockTv);

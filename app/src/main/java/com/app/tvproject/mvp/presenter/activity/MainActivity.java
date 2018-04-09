@@ -10,6 +10,7 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -22,6 +23,7 @@ import com.app.tvproject.mvp.adapter.InfoListAdapter;
 import com.app.tvproject.mvp.model.PublicModel;
 import com.app.tvproject.mvp.model.data.BaseEntity;
 import com.app.tvproject.mvp.model.data.ContentBean;
+import com.app.tvproject.mvp.model.data.EqInformationBean;
 import com.app.tvproject.mvp.model.data.EventBusData;
 import com.app.tvproject.mvp.model.data.PublishListBean;
 import com.app.tvproject.mvp.model.data.UpdateUseEqBean;
@@ -103,12 +105,14 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     private Boolean isCutting = false;
     private ContentBean cutBean2 = null;//二次插播的数据
     //测试信息用的
-    private TextView info_tv;
+    public TextView info_tv,info_tv_push;
     private RecyclerView recyclerView, notice_list_recycler;
     private List<ContentBean> beanList = new ArrayList<>();
     private List<ContentBean> noticeList = new ArrayList<>();
     private InfoListAdapter adapter, adapter2;
     private Button nextInfoBtn;
+    private static MainActivity activity;
+    int i = 0;
 
     @Override
     public Class<MainActivityDelegate> getDelegateClass() {
@@ -118,6 +122,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        activity = this;
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         hideUI(true);
         DownLoadFileManager.getInstance().stopDownLoad(false);
@@ -126,21 +131,51 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         timer = new Timer();
         if (viewDelegate != null) { //这些测试用的
             nextInfoBtn = (Button) findViewById(R.id.nextInfoBtn);
-            info_tv = (TextView) findViewById(R.id.info_tv);
+            List<Integer> title = new ArrayList<>();
+            title.add(R.string.tv_right_content);
+            title.add(R.string.tv_right_content1);
+            title.add(R.string.tv_right_content2);
             recyclerView = viewDelegate.get(R.id.info_list_recycler);
+            info_tv = viewDelegate.get(R.id.info_tv);
+            info_tv_push = viewDelegate.get(R.id.info_tv_push);
             notice_list_recycler = viewDelegate.get(R.id.notice_list_recycler);
+            if (Constants.isDebug) {
+                recyclerView.setVisibility(View.VISIBLE);
+                info_tv.setVisibility(View.VISIBLE);
+                info_tv_push.setVisibility(View.VISIBLE);
+            }
+
+
+
+            TextView tv = (TextView) findViewById(R.id.right_main_tv);
+//            i = SharedPreferencesUtil.getTitle();
+            i = 1;
+            if (i == 1 || i == 2) {
+                tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 58);
+            } else tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 65);
+            tv.setText(title.get(i));
             nextInfoBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (getInformationTask() != null) {
-                        getInformationTask().cancel();
-                        setTaskNull(false);
-                    }
-                    if (getInterCutInfoTask() != null) {
-                        getInterCutInfoTask().cancel();
-                        setTaskNull(true);
-                    }
-                    nextInformation(false);
+                    TextView tv = (TextView) findViewById(R.id.right_main_tv);
+                    i++;
+                    if (i > 2)
+                        i = 0;
+                    SharedPreferencesUtil.saveTitle(i);
+                    if (i == 1 || i == 2) {
+                        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 58);
+                    } else tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 65);
+                    tv.setText(title.get(i));
+
+//                    if (getInformationTask() != null) {
+//                        getInformationTask().cancel();
+//                        setTaskNull(false);
+//                    }
+//                    if (getInterCutInfoTask() != null) {
+//                        getInterCutInfoTask().cancel();
+//                        setTaskNull(true);
+//                    }
+//                    nextInformation(false);
                 }
             });
         }
@@ -211,6 +246,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
 
 
     private void initServiceData() {
+        getEqInfo();
         initData(false);
         finishActivityTask = new TimerTask() {
             @Override
@@ -231,6 +267,27 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 }
         );
     }
+
+
+    private void getEqInfo() {
+        PublicModel.getInstance().getEqInfo(new Subscriber<BaseEntity<EqInformationBean>>() {
+            @Override
+            public void onCompleted() {
+
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                ToastUtil.l("获取设备信息错误");
+            }
+
+            @Override
+            public void onNext(BaseEntity<EqInformationBean> eqInformationBeanBaseEntity) {
+                ControlVolumeUtil.saveVoice(eqInformationBeanBaseEntity.getResult().voice);
+            }
+        }, String.valueOf(eqId));
+    }
+
 
     private void initData(Boolean deleteAll) {
         //显示出视图
@@ -266,11 +323,11 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     private void initInfo() {
         //取出本地资讯
         List<ContentBean> informationList = loadAllValidInformation();
+        beanList.clear();
+        beanList.addAll(informationList);
+        adapter = new InfoListAdapter(this, beanList, true);
+        initRecycler(recyclerView, adapter);
         if (informationList.size() != 0) {
-            beanList.clear();
-            beanList.addAll(informationList);
-            adapter = new InfoListAdapter(this, beanList, true);
-            initRecycler(recyclerView, adapter);
             nextInformation(true);
         } else {
             setInfoNull(-1);
@@ -303,11 +360,11 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     private void initNotice() {
         //取出通知
         List<ContentBean> notice = loadAllValidNotice();
+        noticeList.clear();
+        noticeList.addAll(notice);
+        adapter2 = new InfoListAdapter(this, noticeList, false);
+        initRecycler(notice_list_recycler, adapter2);
         if (notice.size() != 0) {
-            noticeList.clear();
-            noticeList.addAll(notice);
-            adapter2 = new InfoListAdapter(this, noticeList, false);
-            initRecycler(notice_list_recycler, adapter2);
             nextNotice(true);
         } else if (viewDelegate != null) viewDelegate.setNoticeNull();
     }
@@ -406,7 +463,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
 
 
     private void refreshData(List<ContentBean> serverList) {
-        deleteDataAndShared(true, true);
+        deleteDataAndShared(false, true);
 //        for (int i = 0; i < serverList.size(); i++) {
 //            if (serverList.get(i).size() != 0) {
         insertOrReplaceList(serverList);
@@ -428,100 +485,93 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
      * 之后调用init方法 搞定
      */
     private void compareWithServer(List<ContentBean> serverList, Boolean clearShared) {
-//        //之前本地的集合和集合Id
-//        List<ContentBean> beforeList = loadAllValidInformation();
-//        List<Long> beforeId = new ArrayList<>();
-//        for (int i = 0; i < beforeList.size(); i++) {
-//            beforeId.add(beforeList.get(i).getId());
-//        }
-        //服务器得到的集合和Id
-        List<ContentBean> allList = new ArrayList<>();
-//        for (int i = 0; i < serverList.size(); i++) {
-//            if (serverList.get(i).size() != 0) {
-        allList.addAll(serverList);
-//            }
-//        }
-        if (allList.size() == 0) {
-            setInfoNull(-1);
-        } else {
+        if (serverList.size() != 0) {
             List<ContentBean> infoList = new ArrayList<>();
             List<ContentBean> noticeList = new ArrayList<>();
             List<ContentBean> resultList = new ArrayList<>();
-            for (int i = 0; i < allList.size(); i++) {
-                if (allList.get(i).getPublishTypeId() == Constants.PUBLISH_TYPE_INFORMATION || allList.get(i).getPublishTypeId() == Constants.PUBLISH_TYPE_ADVERT)
-                    infoList.add(allList.get(i));
-                if (allList.get(i).getPublishTypeId() == Constants.PUBLISH_TYPE_NOTICE) {
-                    noticeList.add(allList.get(i));
+            for (int i = 0; i < serverList.size(); i++) {
+                if (serverList.get(i).getPublishTypeId() == Constants.PUBLISH_TYPE_INFORMATION || serverList.get(i).getPublishTypeId() == Constants.PUBLISH_TYPE_ADVERT)
+                    infoList.add(serverList.get(i));
+                if (serverList.get(i).getPublishTypeId() == Constants.PUBLISH_TYPE_NOTICE) {
+                    noticeList.add(serverList.get(i));
                 }
             }
             for (int i = 0; i < infoList.size(); i++) {
                 ContentBean bean = infoList.get(i);
-                bean.setResourcesDir(FileUtil.getFileName(bean));
-                if (hasBgm(bean)) {
-                    bean.setBgmDir(FileUtil.getBgmFileName(bean));
+                if (bean.getResourcesUrl() != null) {
+                    bean.setResourcesDir(FileUtil.getFileName(bean));
+                    if (hasBgm(bean)) {
+                        bean.setBgmDir(FileUtil.getBgmFileName(bean));
+                    }
+                    resultList.add(bean);
                 }
-                resultList.add(bean);
             }
 
-//            List<Long> afterId = new ArrayList<>();
-//            for (int i = 0; i < afterList.size(); i++) {
-//                afterId.add(afterList.get(i).getId());
-//            }
-//
-//            //要找出相同的Id和对应下标
-//            List<Long> sameId = new ArrayList<>();
-//            List<Integer> sameIdIndex = new ArrayList<>();
-//            for (int j = 0; j < afterId.size(); j++) {
-//                for (int i = 0; i < beforeId.size(); i++) {
-//                    if (beforeId.get(i).equals(afterId.get(j))) {
-//                        LogUtil.w("测试刷新", "有相同的id，id值为：" + afterId.get(j) + "标题为:" + queryContentById(afterId.get(j)).getHeadline() + "在after的下标为:" + j);
-//                        sameId.add(afterId.get(j));
-//                        sameIdIndex.add(j);
-//                    }
-//                }
-//            }
-//
-//            //有相同id的，要比较它们的sortTime，如果发现有编辑过，那就保留网址，没编辑过，替换网址成local地址
-//            for (int i = 0; i < sameId.size(); i++) {
-//                ContentBean beforeBean = queryContentById(sameId.get(i));
-//                String[] imgUrl = beforeBean.getResourcesUrl().replaceAll(" ", "").split(",");
-//                ContentBean afterBean = afterList.get(sameIdIndex.get(i));
-//                LogUtil.w("测试刷新", "相同Id它们的sort为：beforeBean：" + beforeBean.getSort() + " afterBean:" + afterBean.getSort());
-//                if (beforeBean.getSort() >= afterBean.getSort()) {
-//                    if (isFileAllExists(imgUrl)) {
-//                        LogUtil.w("测试刷新", "更换网址为本地");
-//                        afterBean.setResourcesUrl(beforeBean.getResourcesUrl());
-//                    }
-//                }
-//                //编辑过，要把原来的多余数据删了
-//                else {
-//                    DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getResourcesUrl());
-//                    if (hasBgm(beforeBean))
-//                        DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getBgm());
-//                }
-//            }
-//            beforeId.removeAll(sameId);
-//            for (int i = 0; i < beforeId.size(); i++) {
-//                ContentBean beforeBean = queryContentById(beforeId.get(i));
-//                DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getResourcesUrl());
-//                if (hasBgm(beforeBean))
-//                    DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getBgm());
-//            }
-            deleteDataAndShared(false, clearShared);
-            List<ContentBean> testList = new ArrayList<>();
-            for (int i = 0; i < resultList.size(); i++) {
-                if (FileUtil.getFileSuffix(resultList.get(i).getResourcesUrl()).equals(".mp4"))
-                    testList.add(resultList.get(i));
+            if (resultList.size() == 0) {
+                getListNull(true, false);
+            } else {
+                //之前本地的集合和集合Id
+                List<ContentBean> beforeList = loadAllValidInformation();
+                List<Long> beforeId = new ArrayList<>();
+                for (int i = 0; i < beforeList.size(); i++) {
+                    beforeId.add(beforeList.get(i).getId());
+                }
+                //服务器得到的集合和Id
+                List<Long> afterId = new ArrayList<>();
+                for (int i = 0; i < resultList.size(); i++) {
+                    afterId.add(resultList.get(i).getId());
+                }
+
+                //要找出相同的Id和对应下标
+                List<Long> sameId = new ArrayList<>();
+                List<Integer> sameIdIndex = new ArrayList<>();
+                for (int j = 0; j < afterId.size(); j++) {
+                    for (int i = 0; i < beforeId.size(); i++) {
+                        if (beforeId.get(i).equals(afterId.get(j))) {
+                            LogUtil.w("测试刷新", "有相同的id，id值为：" + afterId.get(j) + "标题为:" + queryContentById(afterId.get(j)).getHeadline() + "在after的下标为:" + j);
+                            sameId.add(afterId.get(j));
+                            sameIdIndex.add(j);
+                        }
+                    }
+                }
+                //有相同id的，要比较它们的sortTime，如果发现有编辑过，就删掉本地缓存，没编辑过，就设置图片路径
+                for (int i = 0; i < sameId.size(); i++) {
+                    ContentBean beforeBean = queryContentById(sameId.get(i));
+                    ContentBean afterBean = resultList.get(sameIdIndex.get(i));
+                    LogUtil.w("测试刷新", "相同Id它们的sort为：beforeBean：" + beforeBean.getSort() + " afterBean:" + afterBean.getSort());
+                    //编辑过，要把原来的多余数据删了
+                    if (beforeBean.getSort() < afterBean.getSort()) {
+//                        DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getResourcesDir());
+                        if (hasBgm(beforeBean)) {
+//                            DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getBgmDir());
+                        }
+                    }
+                }
+                beforeId.removeAll(sameId);
+                for (int i = 0; i < beforeId.size(); i++) {
+                    ContentBean beforeBean = queryContentById(beforeId.get(i));
+                    DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getResourcesDir());
+                    if (hasBgm(beforeBean))
+                        DownLoadFileManager.getInstance().addDeleteTask(beforeBean.getBgmDir());
+                }
+                deleteDataAndShared(false, clearShared);
+                insertOrReplaceList(resultList);
+                insertOrReplaceList(noticeList);
+                if (!isStop && viewDelegate != null) {
+                    startDownLoad();
+                    initInfo();
+                    initNotice();
+                }
+                LogUtil.d("qidong", "对比完成");
             }
-            insertOrReplaceList(resultList);
-            insertOrReplaceList(noticeList);
-            if (!isStop && viewDelegate != null) {
-                startDownLoad();
-                initInfo();
-                initNotice();
-            }
-//            LogUtil.d("qidong", "对比完成");
-        }
+        } else getListNull(true, true);
+    }
+
+    private void getListNull(Boolean deleteFile, Boolean clearShared) {
+        setInfoNull(-1);
+        deleteDataAndShared(deleteFile, clearShared);
+        initInfo();
+        initNotice();
     }
 
 
@@ -540,14 +590,9 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         List<ContentBean> infoList = loadAllValidInformation();
         for (int i = 0; i < infoList.size(); i++) {
             ContentBean contentBean = infoList.get(i);
-            String[] urlList = contentBean.getResourcesDir().replaceAll(" ", "").split(",");
-            if (!isFileAllExists(urlList)) {
-                for (int j = 0; j < urlList.length; j++) {
-                    DownLoadFileManager.getInstance().addDownloadTask(j, contentBean);
-                }
+            if (contentBean.getResourcesDir() != null) {
+                initDownLoad(contentBean);
             }
-            if (hasBgm(contentBean) && !FileUtil.isFileExists(contentBean.getBgmDir()))
-                DownLoadFileManager.getInstance().addDownLoadBgm(contentBean);
         }
     }
 
@@ -620,7 +665,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         switch (action) {
             //处理内容信息
             case "pushNotice":
-                info_tv.setText("设备Id:" + eqId + " 收到的内容Id:" + contentId);
+                info_tv_push.setText("设备Id:" + eqId + " 收到的内容Id:" + contentId);
                 getPublishContent(contentId);
                 break;
             //处理设备信息
@@ -664,7 +709,8 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                         case Constants.PUBLISH_TYPE_INFORMATION:
                         case Constants.PUBLISH_TYPE_ADVERT:
                             beanList.remove(contentBean);
-                            adapter.notifyDataSetChanged();
+                            if (adapter != null)
+                                adapter.notifyDataSetChanged();
                             DownLoadFileManager.getInstance().setStopId(contentId);
                             stopInformation(contentId, contentBean);
                             DownLoadFileManager.getInstance().setStopId(-1);
@@ -907,7 +953,8 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             }
         }
         cutInfoTime = System.currentTimeMillis() - cutInfoTime;
-        contentBean.setResourcesDir(FileUtil.getFileName(contentBean));
+        if (contentBean.getResourcesUrl() != null)
+            contentBean.setResourcesDir(FileUtil.getFileName(contentBean));
         if (hasBgm(contentBean))
             contentBean.setBgmDir(FileUtil.getBgmFileName(contentBean));
         insertOrReplaceContent(contentBean);
@@ -925,8 +972,8 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                 ImgWithTextFragment imgFragment = new ImgWithTextFragment();
                 cutImgFragment = imgFragment;
                 beginInterCutTransaction(true, imgFragment, contentBean);
-                if (hasBgm(contentBean)) {
-                    DownLoadFileManager.getInstance().addDownLoadBgm(contentBean);
+                if (hasBgm(contentBean) && !FileUtil.isFileExists(contentBean.getBgmDir())) {
+//                    DownLoadFileManager.getInstance().addDownLoadBgm(contentBean);
                 }
                 break;
             //插播的是视频
@@ -971,9 +1018,11 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         };
         if (timer != null)
             timer.schedule(interCutInfoTask, contentBean.getDuration() * 1000);
-        String[] imgUrl = contentBean.getResourcesUrl().replaceAll(" ", "").split(",");
-        for (int i = 0; i < imgUrl.length; i++) {
-            DownLoadFileManager.getInstance().addDownloadTask(i, contentBean);
+        String[] imgUrl = contentBean.getResourcesDir().replaceAll(" ", "").split(",");
+        if (!isFileAllExists(imgUrl)) {
+            for (int j = 0; j < imgUrl.length; j++) {
+//                DownLoadFileManager.getInstance().addDownloadTask(j, contentBean);
+            }
         }
     }
 
@@ -999,6 +1048,7 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                     cutVideo.pause();
                     cutVideo.stopPlayback();
                     runOnUiThread(() -> cutVideo.setVisibility(View.GONE));
+
                 }
             }
         }
@@ -1106,7 +1156,8 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
     //为资讯类的操作
     private void isInformation(ContentBean contentBean) {
         LogUtil.d("load", loadAllValidInformation().size() + "");
-        contentBean.setResourcesDir(FileUtil.getFileName(contentBean));
+        if (contentBean.getResourcesUrl() != null)
+            contentBean.setResourcesDir(FileUtil.getFileName(contentBean));
         if (hasBgm(contentBean))
             contentBean.setBgmDir(FileUtil.getBgmFileName(contentBean));
         insertOrReplaceContent(contentBean);
@@ -1129,13 +1180,17 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             SharedPreferencesUtil.saveInformationId(contentBean.getId());
             nextInformation(true);
         }
+        initDownLoad(contentBean);
+    }
 
-        String[] contentList = contentBean.getResourcesUrl().replaceAll(" ", "").split(",");
+    private void initDownLoad(ContentBean contentBean) {
+        String[] contentList = contentBean.getResourcesDir().replaceAll(" ", "").split(",");
         for (int i = 0; i < contentList.length; i++) {
-            DownLoadFileManager.getInstance().addDownloadTask(i, contentBean);
+            if (!isFileAllExists(contentList))
+                DownLoadFileManager.getInstance().addDownloadTask(i, contentBean);
         }
         //下载背景音乐
-        if (hasBgm(contentBean)) {
+        if (hasBgm(contentBean) && !FileUtil.isFileExists(contentBean.getBgmDir())) {
             DownLoadFileManager.getInstance().addDownLoadBgm(contentBean);
         }
     }
@@ -1401,9 +1456,13 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
         }
     }
 
+    public static MainActivity getInstance(){
+        return activity;
+    }
     @Override
     protected void onDestroy() {
         isStop = true;
+        activity = null;
         toDestroy();
         //退出app停止下载
         DownLoadFileManager.getInstance().stopDownLoad(true);

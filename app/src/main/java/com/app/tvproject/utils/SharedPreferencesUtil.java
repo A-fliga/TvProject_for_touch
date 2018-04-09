@@ -227,4 +227,35 @@ public class SharedPreferencesUtil {
         return sharedPreference.getLong(Constants.EQUIPMENT_ID, -1);
     }
 
+    /**
+     * 存储标题下标
+     *
+     * @param
+     * @return
+     */
+    public static void saveTitle(int i) {
+        if (sharedPreference == null) {
+            sharedPreference = MyApplication.getContext()
+                    .getSharedPreferences(Constants.TV_PROJECT_SHARED_NAME, Context.MODE_PRIVATE);
+        }
+        editor = sharedPreference.edit();
+        editor.putInt("title", i);
+        editor.apply();
+    }
+
+    /**
+     * 取出标题下标
+     *
+     * @param
+     * @return
+     */
+    public static int getTitle() {
+        if (sharedPreference == null) {
+            sharedPreference = MyApplication.getContext()
+                    .getSharedPreferences(Constants.TV_PROJECT_SHARED_NAME, Context.MODE_PRIVATE);
+        }
+        return sharedPreference.getInt("title", 0);
+    }
+
+
 }

@@ -8,10 +8,13 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.app.tvproject.mvp.model.data.EventBusData;
+import com.app.tvproject.mvp.presenter.activity.ActivityPresenter;
+import com.app.tvproject.mvp.presenter.activity.MainActivity;
 import com.app.tvproject.utils.LogUtil;
 import com.app.tvproject.utils.ToastUtil;
 
 import org.greenrobot.eventbus.EventBus;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import cn.jpush.android.api.JPushInterface;
@@ -22,13 +25,23 @@ import cn.jpush.android.api.JPushInterface;
 
 public class JpushCustomerReceiver extends BroadcastReceiver {
     private EventBusData eventBusData;
+    private MainActivity activity;
 
     @Override
     public void onReceive(Context context, Intent intent) {
-//        ToastUtil.l("触发推送了，触发推送了，触发推送了，触发推送了触发推送了，触发推送了，");
+        activity = MainActivity.getInstance();
         if (eventBusData == null) {
             eventBusData = new EventBusData();
         }
+        if (activity != null) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    activity.info_tv_push.setText("有推送来了" + intent.getAction());
+                }
+            });
+        }
+
         Bundle bundle = intent.getExtras();
         //接收发送下来的通知
         if (JPushInterface.ACTION_NOTIFICATION_RECEIVED.equals(intent.getAction())) {
@@ -41,6 +54,18 @@ public class JpushCustomerReceiver extends BroadcastReceiver {
                     eventBusData.setVoice(voice);
                 } else if (jsonObject.has("pdId")) {
                     eventBusData.setContent_id(jsonObject.getLong("pdId"));
+                    if (activity != null) {
+                        activity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    activity.info_tv_push.setText("收到推送" + jsonObject.getLong("pdId"));
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        });
+                    }
                 }
                 eventBusData.setAction(action);
                 EventBus.getDefault().post(eventBusData);

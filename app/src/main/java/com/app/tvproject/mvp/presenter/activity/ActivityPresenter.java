@@ -166,6 +166,7 @@ public abstract class ActivityPresenter<T extends ViewDelegate> extends AppCompa
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        activityStack.remove(this);
         viewDelegate = null;
     }
 
