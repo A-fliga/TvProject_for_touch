@@ -5,6 +5,7 @@
     <!--<string names="asd">党建网络理政平台</string>-->
     <!--&#160;-->
     <string name="tv_right_content">智慧党建网络理政平台</string>
-    <string name="tv_right_content1">利民社区党群服务直通车</string>
+    <!--<string name="tv_right_content1">利民社区党群服务直通车</string>-->
+    <string name="tv_right_content1">滨西社区党群服务直通车</string>
     <string name="tv_right_content2">利民社区政好服务直通车</string>
 </resources>

@@ -150,9 +150,9 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
             TextView tv = (TextView) findViewById(R.id.right_main_tv);
 //            i = SharedPreferencesUtil.getTitle();
             i = 1;
-            if (i == 1 || i == 2) {
-                tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 58);
-            } else tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 65);
+//            if (i == 1 || i == 2) {
+//                tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 58);
+//            } else tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 65);
             tv.setText(title.get(i));
             nextInfoBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -163,8 +163,8 @@ public class MainActivity extends ActivityPresenter<MainActivityDelegate> implem
                         i = 0;
                     SharedPreferencesUtil.saveTitle(i);
                     if (i == 1 || i == 2) {
-                        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 58);
-                    } else tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 65);
+                        tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 38);
+                    } else tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 45);
                     tv.setText(title.get(i));
 
 //                    if (getInformationTask() != null) {

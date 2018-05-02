@@ -78,7 +78,7 @@ android {
 //            buildConfigField "String", "HOST", '"http://120.77.172.70:8081"'
         }
         release {
-//            buildConfigField "String", "HOST", '"http://192.168.5.2:8081"'
+//            buildConfigField "String", "HOST", '"http://192.168.5.3:8083"'
 //            buildConfigField "String", "HOST", '"http://119.23.235.164:8083"'
             buildConfigField "String", "HOST", '"https://www.wllzpt.com"'
 //            buildConfigField "String", "HOST", '"http://119.23.235.164:8081"'

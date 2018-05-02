@@ -24,11 +24,15 @@ public class PublicModel implements IModel {
     private PublicModel() {
     }
 
-    private static PublicModel model;
+    private static volatile PublicModel model;
 
     public static PublicModel getInstance() {
-        if (null == model)
-            model = new PublicModel();
+        if (null == model) {
+            synchronized (PublicModel.class) {
+                if (null == model)
+                    model = new PublicModel();
+            }
+        }
         return model;
     }
 
@@ -101,7 +105,7 @@ public class PublicModel implements IModel {
     /**
      * 更新APP
      */
-    public void getUpdateInfo(Subscriber<BaseEntity<UpdateBean>> subscriber){
+    public void getUpdateInfo(Subscriber<BaseEntity<UpdateBean>> subscriber) {
         HttpClient.getInstance().getUpdateInfo(subscriber);
     }
 
@@ -109,8 +113,8 @@ public class PublicModel implements IModel {
      * 获取设备相关信息
      */
     public void getEqInfo(Subscriber<BaseEntity<EqInformationBean>> subscriber, String eqId) {
-        if(NetUtil.isConnect()){
-            HttpClient.getInstance().getEqInfo(subscriber,eqId);
+        if (NetUtil.isConnect()) {
+            HttpClient.getInstance().getEqInfo(subscriber, eqId);
         }
     }
 }

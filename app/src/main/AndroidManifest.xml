@@ -70,6 +70,7 @@
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:screenOrientation="landscape" />
 
+
         <!--极光推送 接受自定义消息-->
         <receiver
             android:name=".receiver.JpushCustomerReceiver"

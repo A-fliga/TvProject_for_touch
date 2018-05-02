@@ -267,6 +267,10 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
             super.onPageFinished(view, url);
             isFirstStart = false;
             ProgressDialogUtil.instance().stopLoad();
+            if (!NetUtil.isConnectNoToast()) {
+                noConnect = true;
+                error_url = url;
+            }
         }
 
         @Override
@@ -358,7 +362,6 @@ public class TouchScreenActivity extends ActivityPresenter<TouchScreenActivityDe
         }
         if (eqId != -1)
             updateServiceStatus(eqId, 0);
-
     }
 
 
